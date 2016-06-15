@@ -18,6 +18,7 @@ lazy val analyticsUi = project.in(file("analytics-ui"))
   .settings(serverSettings)
   .settings(protobufSettings(protocol))
 lazy val ingest = project.in(file("ingest"))
+  .dependsOn(protocol % PB.protobufConfig.name)
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
@@ -29,14 +30,12 @@ lazy val commonSettings = Seq(
 )
 
 def protobufSettings(protocol: Project) = PB.protobufSettings ++ Seq(
-  generatedTargets in PB.protobufConfig <++= (sourceDirectory in Compile){ dir =>
-    Seq((dir / ".." / "generated" / "scala", "*.scala"))
-  },
   version in PB.protobufConfig := "2.6.1",
   PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)),
-  sourceDirectories in PB.protobufConfig := ((resourceDirectories in protocol) in Compile).value,
-  externalIncludePath in PB.protobufConfig := ((resourceDirectory in protocol) in Compile).value,
-  libraryDependencies in PB.protobufConfig += (projectID in protocol).value,
+  //sourceDirectory <<= ((sourceDirectory in protocol) in Compile)(_ / "resources"),
+  //sourceDirectory := ((sourceDirectory in protocol) in Compile).value,
+  //javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
+  externalIncludePath in PB.protobufConfig := ((classDirectory in protocol) in Compile).value,
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value % PB.protobufConfig.name
 )
 
