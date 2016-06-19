@@ -36,6 +36,8 @@ def protobufSettings(protocol: Project) = PB.protobufSettings ++ Seq(
   //sourceDirectory := ((sourceDirectory in protocol) in Compile).value,
   //javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   externalIncludePath in PB.protobufConfig := ((classDirectory in protocol) in Compile).value,
+  sourceDirectories in PB.protobufConfig <+= externalIncludePath in PB.protobufConfig,
+  javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value % PB.protobufConfig.name
 )
 

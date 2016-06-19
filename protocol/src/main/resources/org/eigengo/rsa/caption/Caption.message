@@ -1,3 +1,0 @@
-message Caption {
-    required string caption = 1;
-}
