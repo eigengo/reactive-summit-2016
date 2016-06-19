@@ -1,1 +1,2 @@
-addSbtPlugin("com.github.gseitz" % "sbt-protobuf" % "0.5.2")
+addSbtPlugin("com.trueaccord.scalapb" % "sbt-scalapb" % "0.4.20")
+

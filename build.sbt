@@ -1,7 +1,7 @@
 import sbt.Keys._
-import sbtprotobuf.{ProtobufPlugin=>PB}
+import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
 
-scalaVersion in ThisBuild := "2.12.0-M4"
+scalaVersion in ThisBuild := "2.11.8"
 
 lazy val protocol = project.in(file("protocol"))
   .settings(commonSettings)
@@ -35,8 +35,8 @@ def protobufSettings(protocol: Project) = PB.protobufSettings ++ Seq(
   //sourceDirectory <<= ((sourceDirectory in protocol) in Compile)(_ / "resources"),
   //sourceDirectory := ((sourceDirectory in protocol) in Compile).value,
   //javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
-  externalIncludePath in PB.protobufConfig := ((classDirectory in protocol) in Compile).value,
-  sourceDirectories in PB.protobufConfig <+= externalIncludePath in PB.protobufConfig,
+  PB.externalIncludePath in PB.protobufConfig := ((classDirectory in protocol) in Compile).value,
+  sourceDirectories in PB.protobufConfig <+= PB.externalIncludePath in PB.protobufConfig,
   javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   libraryDependencies += "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value % PB.protobufConfig.name
 )
