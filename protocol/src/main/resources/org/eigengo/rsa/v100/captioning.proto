@@ -1,0 +1,6 @@
+package org.eigengo.rsa.v100.captioning;
+
+message Caption {
+    required string text = 1;
+    required double accuracy = 2;
+}

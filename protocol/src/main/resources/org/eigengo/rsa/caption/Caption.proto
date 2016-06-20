@@ -1,5 +1,0 @@
-package org.eigengo.rsa.caption;
-
-message Captionx {
-    required string c = 1;
-}

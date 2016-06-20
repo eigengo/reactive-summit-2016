@@ -1,0 +1,7 @@
+package org.eigengo.rsa.v101.captioning;
+
+message Caption {
+    required string text = 1;
+    required double accuracy = 2;
+    optional bool speech = 3;
+}
