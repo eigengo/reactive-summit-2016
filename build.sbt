@@ -8,6 +8,12 @@ lazy val protocol = project.in(file("protocol"))
 
 lazy val protobufTestkit = project.in(file("protobuf-testkit"))
   .settings(commonSettings)
+  .settings(Seq(
+    libraryDependencies += Dependencies.scalaTest,
+    libraryDependencies += Dependencies.scalaCheck,
+    libraryDependencies += "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-3",
+    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
+  ))
 
 lazy val analytics = project.in(file("analytics"))
   .settings(commonSettings)
@@ -23,6 +29,7 @@ lazy val analyticsUi = project.in(file("analytics-ui"))
 
 lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(protobufTestkit % Test)
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
