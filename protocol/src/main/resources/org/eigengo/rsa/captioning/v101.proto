@@ -3,4 +3,5 @@ package org.eigengo.rsa.captioning.v101;
 message Caption {
     required string text = 1;
     required double accuracy = 2;
+    optional bool newField = 3;
 }

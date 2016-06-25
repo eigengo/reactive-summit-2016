@@ -62,6 +62,13 @@ trait ProtobufMatchers extends Matchers {
     }
   }
 
+  /**
+    * Returns a matcher that verifies that the given ``GeneratedMessage`` is compatible with
+    * the value unmarshalled using the ``GeneratedMessageCompanion`` on the right.
+    *
+    * @param right the companion that can unmarshal from the wire format
+    * @return compatiblity matcher
+    */
   def compatibleWith(right: Right): BeMatcher[GeneratedMessage] = new CompatibleMatcher(right)
 
 }
