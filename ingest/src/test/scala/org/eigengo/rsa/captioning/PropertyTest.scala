@@ -1,14 +1,16 @@
 package org.eigengo.rsa.captioning
 
-import org.eigengo.protobufcheck.ProtobufMatchers
+import org.eigengo.protobufcheck.{ProtobufGen, ProtobufMatchers}
 import org.scalatest.FlatSpec
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.prop.PropertyChecks
 
-class PropertyTest extends FlatSpec with ProtobufMatchers with GeneratorDrivenPropertyChecks {
+class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks {
 
   "Generated code should" should "foo" in {
     v100.Caption("a", 1) should be (compatibleWith(v101.Caption))
     v101.Caption("a", 1, Some(true)) should be (compatibleWith(v100.Caption))
+
+    forAll(ProtobufGen.message(v101.Caption))(_ should be (compatibleWith(v100.Caption)))
   }
 
 }
