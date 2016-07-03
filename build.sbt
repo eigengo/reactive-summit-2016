@@ -1,31 +1,37 @@
 import sbt.Keys._
-import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
+import com.trueaccord.scalapb.{ScalaPbPlugin ⇒ PB}
 
 scalaVersion in ThisBuild := "2.11.8"
 
 lazy val protocol = project.in(file("protocol"))
   .settings(commonSettings)
 
-lazy val protobufTestkit = project.in(file("protobuf-testkit"))
+lazy val protobufTestkit: Project = project.in(file("protobuf-testkit"))
   .settings(commonSettings)
+  .settings(protobufSettings(Nil))
   .settings(Seq(
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
     libraryDependencies += "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-3",
-    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
+    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30",
+
+    PB.externalIncludePath in PB.protobufConfig := (resourceDirectory in Test).value,
+    sourceDirectories in PB.protobufConfig <+= (resourceDirectory in Test) in PB.protobufConfig,
+    javaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated"),
+    scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
   ))
 
 lazy val analytics = project.in(file("analytics"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
-  .settings(protobufSettings(protocol))
+  .settings(protobufSettings(Seq(protocol)))
 
 lazy val analyticsUi = project.in(file("analytics-ui"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
-  .settings(protobufSettings(protocol))
+  .settings(protobufSettings(Seq(protocol)))
 
 lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
@@ -33,24 +39,24 @@ lazy val ingest = project.in(file("ingest"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
-  .settings(protobufSettings(protocol))
+  .settings(protobufSettings(Seq(protocol)))
 
 lazy val commonSettings = Seq(
   organization := "org.eigengo",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 )
 
-def protobufSettings(protocol: Project) = PB.protobufSettings ++ Seq(
+def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
   version in PB.protobufConfig := "2.6.1",
   PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)),
   javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   scalaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   PB.flatPackage in PB.protobufConfig := true,
-  PB.externalIncludePath in PB.protobufConfig := ((classDirectory in protocol) in Compile).value,
   sourceDirectories in PB.protobufConfig <+= PB.externalIncludePath in PB.protobufConfig,
   // The Scala SBT plugin adds a dependency on 2.6.1 protobuf, but we're running on 3.0.0
   libraryDependencies -= "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value
-)
+) ++ protocols.map(p ⇒ PB.externalIncludePath in PB.protobufConfig := ((classDirectory in p) in Compile).value)
+
 
 lazy val dockerSettings = Seq(
   dockerBaseImage := "cakesolutions/alpine-dcos-base:latest",

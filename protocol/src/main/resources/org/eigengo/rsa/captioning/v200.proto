@@ -1,0 +1,14 @@
+package org.eigengo.rsa.captioning.v200;
+
+message Caption {
+    required string text = 1;
+    repeated Item items = 2;
+
+    message Item {
+        required double accuracy = 10;
+        oneof kind {
+            string namedPerson = 100;
+            string category = 101;
+        }
+    }
+}
