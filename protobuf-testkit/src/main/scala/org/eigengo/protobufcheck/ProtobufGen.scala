@@ -43,23 +43,41 @@ object ProtobufGen {
       }
     }
 
-    def existentialMessage(companion: GeneratedMessageCompanion[_]): Gen[_] = {
-      val oneOfFields = companion.descriptor.getOneofs.toList.flatMap(_.getFields.toList)
-      val fields = companion.descriptor.getFields.toList
-
-      val generators = generatorsFromFields(fields.filterNot(oneOfFields.contains)) ++
-                       generatorsFromFields(oneOfFields)
+    def flatten(generators: List[(FieldDescriptor, Gen[Any])]): Gen[Map[FieldDescriptor, Any]] = {
+      assert(generators.nonEmpty, "The list of generators must not be empty.")
 
       val (ffd, ffg) = generators.head
-      val firstFieldGenerator = ffg.map { x ⇒ Map(ffd → x) }
+      val firstFieldGenerator = ffg.map(x ⇒ Map(ffd → x))
       val remainingFieldGenerators = generators.tail
 
-      val mappedGenerator = remainingFieldGenerators.foldLeft(firstFieldGenerator) {
-        case (result, (fd, fg)) ⇒
-          result.flatMap { m ⇒ fg.map(x ⇒ Map(fd → x) ++ m) }
+      remainingFieldGenerators.foldLeft(firstFieldGenerator) {
+        case (result, (fd, fg)) ⇒ result.flatMap(m ⇒ fg.map(x ⇒ Map(fd → x) ++ m))
+      }
+    }
+
+    def existentialMessage(companion: GeneratedMessageCompanion[_]): Gen[_] = {
+      val oneOfFields = companion.descriptor.getOneofs.toList
+      val fields = companion.descriptor.getFields.toList
+
+      // construct generators for plain fields: i.e. those that are not algebraic
+      val plainGenerators = flatten(generatorsFromFields(fields.filterNot(oneOfFields.flatMap(_.getFields.toList).contains)))
+      // construct generators for algebraic fields
+      val oneOfGenerators = oneOfFields.map { oneOf ⇒
+        val fg = Gen.oneOf(oneOf.getFields.toList)
+        fg.flatMap { fd ⇒
+          val (_, generator) = generatorsFromFields(List(fd)).head
+          generator.map(x ⇒ Map(fd → x))
+        }
       }
 
-      mappedGenerator.map(companion.fromFieldsMap)
+      val combinedGenerators = oneOfGenerators match {
+        case Nil ⇒ plainGenerators
+        case (h::t) ⇒
+          val oog = t.foldLeft(h) { (result, gen) ⇒ result.flatMap(m ⇒ gen.map(x ⇒ m ++ x)) }
+          oog.flatMap(o ⇒ plainGenerators.map(x ⇒ o ++ x))
+      }
+
+      combinedGenerators.map(companion.fromFieldsMap)
     }
 
     existentialMessage(companion).map(_.asInstanceOf[M])
