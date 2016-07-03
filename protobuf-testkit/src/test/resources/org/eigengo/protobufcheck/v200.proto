@@ -1,4 +1,4 @@
-package org.eigengo.rsa.captioning.v200;
+package org.eigengo.protobufcheck.v200;
 
 message Caption {
     required string text = 1;
@@ -7,9 +7,9 @@ message Caption {
 
     message Item {
         required double accuracy = 10;
-        oneof kind {
-            string namedPerson = 100;
-            string category = 101;
-        }
+//        oneof kind {
+//            string namedPerson = 100;
+//            string category = 101;
+//        }
     }
 }

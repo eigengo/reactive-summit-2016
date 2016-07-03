@@ -8,17 +8,17 @@ lazy val protocol = project.in(file("protocol"))
 
 lazy val protobufTestkit: Project = project.in(file("protobuf-testkit"))
   .settings(commonSettings)
-  .settings(protobufSettings(Nil))
   .settings(Seq(
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
     libraryDependencies += "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-3",
-    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30",
+    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
 
-    PB.externalIncludePath in PB.protobufConfig := (resourceDirectory in Test).value,
-    sourceDirectories in PB.protobufConfig <+= (resourceDirectory in Test) in PB.protobufConfig,
-    javaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated"),
-    scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
+    // TODO: complete me
+    //PB.externalIncludePath in PB.protobufConfig := (classDirectory in Test).value,
+    //sourceDirectories in PB.protobufConfig <+= (sourceDirectory in Test)(_ / "resources"),
+    //javaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated"),
+    //scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
   ))
 
 lazy val analytics = project.in(file("analytics"))

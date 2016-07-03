@@ -1,0 +1,6 @@
+package org.eigengo.protobufcheck.v100;
+
+message Caption {
+    required string text = 1;
+    required double accuracy = 2;
+}
