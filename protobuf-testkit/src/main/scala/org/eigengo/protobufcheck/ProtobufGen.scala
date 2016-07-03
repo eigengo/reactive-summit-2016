@@ -7,6 +7,15 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object ProtobufGen {
 
+  /**
+    * Returns a generator for the ScalaPB-based message defined by its ``companion``. The companion is typically
+    * generated during the ``protobuf:protobuf-generate`` sbt task, which also typically runs during the ``package``
+    * task.
+    *
+    * @param companion the companion for the message type ``M``
+    * @tparam M the message type
+    * @return generator for arbitrary messages of type ``M``
+    */
   def message[M <: GeneratedMessage with Message[M]](companion: GeneratedMessageCompanion[M]): Gen[M] = {
     import collection.JavaConversions._
 
