@@ -6,13 +6,13 @@ scalaVersion in ThisBuild := "2.11.8"
 lazy val protocol = project.in(file("protocol"))
   .settings(commonSettings)
 
-lazy val protobufTestkit: Project = project.in(file("protobuf-testkit"))
+lazy val protobufTestkit = project.in(file("protobuf-testkit"))
   .settings(commonSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
-    libraryDependencies += "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-3",
-    libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
+    libraryDependencies += Dependencies.protobuf,
+    libraryDependencies += Dependencies.scalaPbRuntime
 
     // TODO: complete me
     //PB.externalIncludePath in PB.protobufConfig := (classDirectory in Test).value,
@@ -20,6 +20,13 @@ lazy val protobufTestkit: Project = project.in(file("protobuf-testkit"))
     //javaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated"),
     //scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
   ))
+
+//lazy val protobufDerivedMarshallers = project.in(file("protobuf-derived-marshallers"))
+//  .settings(commonSettings)
+//  .settings(Seq(
+//    libraryDependencies += Dependencies.protobuf,
+//    libraryDependencies += Dependencies.scalaPbRuntime
+//  ))
 
 lazy val analytics = project.in(file("analytics"))
   .settings(commonSettings)
@@ -40,6 +47,11 @@ lazy val ingest = project.in(file("ingest"))
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+    libraryDependencies += Dependencies.akkaActor,
+    libraryDependencies += Dependencies.akkaHttpCore,
+    libraryDependencies += Dependencies.akkaHttpExperimental
+  ))
 
 lazy val commonSettings = Seq(
   organization := "org.eigengo",
