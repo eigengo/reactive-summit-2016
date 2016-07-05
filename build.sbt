@@ -12,7 +12,8 @@ lazy val protobufTestkit = project.in(file("protobuf-testkit"))
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
     libraryDependencies += Dependencies.protobuf,
-    libraryDependencies += Dependencies.scalaPbRuntime
+    libraryDependencies += Dependencies.scalaPbRuntime,
+    libraryDependencies += Dependencies.scalaPbJson4s
 
     // TODO: complete me
     //PB.externalIncludePath in PB.protobufConfig := (classDirectory in Test).value,
@@ -55,11 +56,12 @@ lazy val ingest = project.in(file("ingest"))
 
 lazy val commonSettings = Seq(
   organization := "org.eigengo",
-  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
+  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
+  resolvers += "Maven central" at "http://repo1.maven.org/maven2/"
 )
 
 def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
-  version in PB.protobufConfig := "2.6.1",
+  version in PB.protobufConfig := "3.0.0-beta-3",
   PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)),
   javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   scalaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
