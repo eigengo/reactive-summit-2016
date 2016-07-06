@@ -12,8 +12,7 @@ lazy val protobufTestkit = project.in(file("protobuf-testkit"))
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
     libraryDependencies += Dependencies.protobuf,
-    libraryDependencies += Dependencies.scalaPbRuntime,
-    libraryDependencies += Dependencies.scalaPbJson4s
+    libraryDependencies += Dependencies.scalaPbRuntime
 
     // TODO: complete me
     //PB.externalIncludePath in PB.protobufConfig := (classDirectory in Test).value,
@@ -51,7 +50,8 @@ lazy val ingest = project.in(file("ingest"))
   .settings(Seq(
     libraryDependencies += Dependencies.akkaActor,
     libraryDependencies += Dependencies.akkaHttpCore,
-    libraryDependencies += Dependencies.akkaHttpExperimental
+    libraryDependencies += Dependencies.akkaHttpExperimental,
+    libraryDependencies += Dependencies.scalaPbJson4s
   ))
 
 lazy val commonSettings = Seq(
