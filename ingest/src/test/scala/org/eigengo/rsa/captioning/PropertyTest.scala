@@ -19,7 +19,7 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
   implicit val materializer = ActorMaterializer()
 
   def inOut[A](value: A, contentTypes: ContentType*)(implicit marshaller: ToEntityMarshaller[A], unmarshaller: FromEntityUnmarshaller[A]): Seq[(MessageEntity, A)] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+    import system.dispatcher
 
     val futureResults = contentTypes.map { contentType ⇒
       marshaller.apply(value)
@@ -59,8 +59,7 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
 
     inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`)
 
-    println(inOut(x, ContentTypes.`application/json`))
-    println(inOut(x, ContentTypes.`application/octet-stream`))
+    println(inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`))
   }
 
 }
