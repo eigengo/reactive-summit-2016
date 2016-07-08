@@ -10,7 +10,7 @@ import com.google.protobuf.CodedInputStream
 import com.trueaccord.scalapb.json.JsonFormat
 import com.trueaccord.scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
-import scala.annotation.Annotation
+import scala.annotation.StaticAnnotation
 import scala.concurrent.Future
 
 trait ScalaPBMarshalling {
@@ -51,6 +51,6 @@ trait ScalaPBMarshalling {
 }
 
 object ScalaPBMarshalling extends ScalaPBMarshalling {
-  private class allowMarshaller extends Annotation
-  private class allowUnmarshaller extends Annotation
+  private class allowMarshaller extends StaticAnnotation
+  private class allowUnmarshaller extends StaticAnnotation
 }

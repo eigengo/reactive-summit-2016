@@ -1,0 +1,4 @@
+<plugin>
+    <name>linter</name>
+    <classname>org.eigengo.rsa.linter.MarshallerLinterPlugin</classname>
+</plugin>

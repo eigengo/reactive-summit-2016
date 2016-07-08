@@ -21,12 +21,11 @@ lazy val protobufTestkit = project.in(file("protobuf-testkit"))
     //scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
   ))
 
-//lazy val protobufDerivedMarshallers = project.in(file("protobuf-derived-marshallers"))
-//  .settings(commonSettings)
-//  .settings(Seq(
-//    libraryDependencies += Dependencies.protobuf,
-//    libraryDependencies += Dependencies.scalaPbRuntime
-//  ))
+lazy val linterPlugin = project.in(file("linter-plugin"))
+  .settings(commonSettings)
+  .settings(Seq(
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
+  ))
 
 lazy val analytics = project.in(file("analytics"))
   .settings(commonSettings)
@@ -43,10 +42,12 @@ lazy val analyticsUi = project.in(file("analytics-ui"))
 lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(protobufTestkit % Test)
+  .dependsOn(linterPlugin)
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(libraryDependencies += compilerPlugin((moduleID in linterPlugin).value))
   .settings(Seq(
     libraryDependencies += Dependencies.akkaActor,
     libraryDependencies += Dependencies.akkaHttpCore,
@@ -57,7 +58,8 @@ lazy val ingest = project.in(file("ingest"))
 lazy val commonSettings = Seq(
   organization := "org.eigengo",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
-  resolvers += "Maven central" at "http://repo1.maven.org/maven2/"
+  resolvers += "Maven central" at "http://repo1.maven.org/maven2/",
+  autoCompilerPlugins := true
 )
 
 def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
