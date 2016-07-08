@@ -28,7 +28,6 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
       }
 
       override def apply(unit: CompilationUnit): Unit = {
-        global.error("sfgxsfdgf")
         unit.body.foreach {
           case d@ValDef(_, _, _, rhs) ⇒
             mapRhs(rhs).foreach { rejection ⇒
