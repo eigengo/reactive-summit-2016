@@ -42,12 +42,12 @@ lazy val analyticsUi = project.in(file("analytics-ui"))
 lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(protobufTestkit % Test)
-  .dependsOn(linterPlugin)
+  .dependsOn(linterPlugin % Compile)
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
-  .settings(libraryDependencies += compilerPlugin((moduleID in linterPlugin).value))
+  .settings(libraryDependencies += compilerPlugin((projectID in linterPlugin).value))
   .settings(Seq(
     libraryDependencies += Dependencies.akkaActor,
     libraryDependencies += Dependencies.akkaHttpCore,

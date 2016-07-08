@@ -5,11 +5,12 @@ import scala.tools.nsc.{Global, Phase}
 
 class MarshallerLinterPlugin(val global: Global) extends Plugin {
   plugin ⇒
+
+  throw new RuntimeException("Boom")
+
   override val name: String = "Marshaller Linter"
   override val description: String = "Verifies the coding standards of marshalling code"
   override val components: List[PluginComponent] = List(component)
-
-  println("***************")
 
   private object component extends PluginComponent {
     override val global: Global = plugin.global
@@ -27,6 +28,7 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
       }
 
       override def apply(unit: CompilationUnit): Unit = {
+        global.error("sfgxsfdgf")
         unit.body.foreach {
           case d@ValDef(_, _, _, rhs) ⇒
             mapRhs(rhs).foreach { rejection ⇒
