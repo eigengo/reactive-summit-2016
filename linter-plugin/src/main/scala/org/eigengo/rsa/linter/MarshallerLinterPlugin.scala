@@ -19,11 +19,12 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
     import global._
 
     override def newPhase(prev: Phase): Phase = new StdPhase(prev) {
-      private val permitTypeName = TypeName("org.eigengo.rsa.ScalaPBMarshalling.permit")
+      private val permitTypeName = rootMirror.getClassIfDefined("org.eigengo.rsa.ScalaPBMarshalling.permit")
       private val rejectedRhsTypes =
         List("akka.http.scaladsl.marshalling.Marshaller", "akka.http.scaladsl.unmarshalling.Unmarshaller")
           .map(name ⇒ rootMirror.getClassIfDefined(name).tpe.erasure)
       private type Rejection = String
+
 
       private def mapRhs(rhs: Tree): Option[Rejection] = {
         if (rhs.tpe <:< definitions.NullTpe) None
@@ -35,17 +36,18 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
           Iterator(tree, analyzer.macroExpandee(tree)).filter(_ != EmptyTree)
             .flatMap(t ⇒ Iterator(t) ++ t.children.iterator.flatMap(allTrees))
 
-        def permit(annotaitonInfo: AnnotationInfo): Boolean =
-          annotaitonInfo.matches(permitTypeName)
-
         def suppressedTree(tree: Tree) = tree match {
-          case Annotated(annot, arg) ⇒
+          case Annotated(annot, arg) if !annot.tpe.hasAnnotation(permitTypeName) ⇒
             global.inform("A>>>>>>>>>>>>> " + annot.tpe.annotations.toString())
             Some(arg)
-          case typed@Typed(expr, tpt) ⇒
+          case typed@Typed(expr, tpt) if !expr.tpe.hasAnnotation(permitTypeName) ⇒
             global.inform("T>>>>>>>>>>>>> " + expr.tpe.annotations.toString())
             Some(typed)
-          case md: MemberDef ⇒
+          case md: MemberDef if !md.symbol.hasAnnotation(permitTypeName) ⇒
+            md.symbol.annotations.foreach { a ⇒
+              global.inform(a.toString + " -> " + permitTypeName.toString())
+              if (a.tpe <:< permitTypeName.tpe) global.inform("ADFSFASDFSDFSF")
+            }
             global.inform("M>>>>>>>>>>>>> " + md.symbol.annotations.toString())
             Some(md)
           case _ => None
@@ -54,7 +56,7 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
         val suppressedTrees = allTrees(unit.body).flatMap(suppressedTree).toList
 
         suppressedTrees.foreach {
-          case d@ValDef(mods, _, _, rhs) if !mods.hasAnnotationNamed(permit) ⇒
+          case d@ValDef(mods, _, _, rhs) ⇒
             mapRhs(rhs).foreach { rejection ⇒
               global.globalError(d.pos, s"Cannot hand-roll val of type $rejection.")
             }
