@@ -6,7 +6,6 @@ import akka.http.scaladsl.model.{ContentType, ContentTypes, HttpEntity, MediaTyp
 import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.http.scaladsl.util.FastFuture
-import com.fasterxml.jackson.annotation.JacksonInject
 import com.google.protobuf.CodedInputStream
 import com.trueaccord.scalapb.json.JsonFormat
 import com.trueaccord.scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
@@ -32,7 +31,6 @@ trait ScalaPBMarshalling {
   }
 
   @ScalaPBMarshalling.permit
-  @JacksonInject
   implicit def scalaPBToEntityMarshaller[U <: GeneratedMessage]: ToEntityMarshaller[U] = {
     def jsonMarshaller(): ToEntityMarshaller[U] = {
       val contentType = applicationJsonContentType

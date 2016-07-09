@@ -56,6 +56,14 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
       items = Seq(v200.Caption.Item(accuracy = 1, kind = Kind.Category("foo")), v200.Caption.Item(accuracy = 1, kind = Kind.NamedPerson("bar"))),
       corpus = v200.Caption.Corpus.UNIVERSAL)
 
+    implicit val _: Unmarshaller[HttpEntity, v200.Caption] = scalaPBFromRequestUnmarshaller(v200.Caption)
+
+    inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`)
+
+    println(inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`))
+  }
+
+  "Hand-rolled marshallers" should "be rejected" in {
     implicit def someMarshaller: ToEntityMarshaller[v100.Caption] = {
       Marshaller.withFixedContentType(ContentTypes.`application/json`)(_ ⇒ HttpEntity.Empty)
     }
@@ -70,11 +78,6 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
       _ ⇒ Future.failed(UnsupportedContentTypeException())
     })
 
-    val x2: Unmarshaller[HttpEntity, v200.Caption] = scalaPBFromRequestUnmarshaller(v200.Caption)
-
-    inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`)
-
-    println(inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`))
   }
 
 }
