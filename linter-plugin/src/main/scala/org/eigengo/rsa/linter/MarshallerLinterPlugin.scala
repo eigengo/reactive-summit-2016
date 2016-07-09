@@ -25,16 +25,13 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
 
     import global._
 
-    // the types of vals or defs that we will reject
-    private val rejectedRhsTypes =
-      List("akka.http.scaladsl.marshalling.Marshaller", "akka.http.scaladsl.unmarshalling.Unmarshaller")
-        .map(name ⇒ rootMirror.getClassIfDefined(name).tpe.erasure)
-
     override def newPhase(prev: Phase): Phase = new StdPhase(prev) {
 
       override def apply(unit: CompilationUnit): Unit = {
         // the permit
         val permitAnnotationType = rootMirror.getClassIfDefined("org.eigengo.rsa.ScalaPBMarshalling.permit").tpe
+        val rejectedRhsTypes = List("akka.http.scaladsl.marshalling.Marshaller", "akka.http.scaladsl.unmarshalling.Unmarshaller")
+          .map(name ⇒ rootMirror.getClassIfDefined(name).tpe.erasure)
 
         // Expands all child trees of ``tree``, returning flattened iterator of trees.
         def allTrees(tree: Tree): Iterator[Tree] =
