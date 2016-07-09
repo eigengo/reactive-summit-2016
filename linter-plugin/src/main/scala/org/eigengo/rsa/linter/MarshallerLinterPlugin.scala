@@ -3,6 +3,10 @@ package org.eigengo.rsa.linter
 import scala.tools.nsc.plugins.{Plugin, PluginComponent}
 import scala.tools.nsc.{Global, Phase}
 
+/**
+  * Reports compile errors in code that attempts to use hand-rolled marshallers
+  * @param global the NSC global
+  */
 class MarshallerLinterPlugin(val global: Global) extends Plugin {
   plugin ⇒
 
@@ -10,6 +14,9 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
   override val description: String = "Verifies the coding standards of marshalling code"
   override val components: List[PluginComponent] = List(component)
 
+  /**
+    * Introduces the ``marshaller-linter`` phase after ``typer``, before ``patmat``.
+    */
   private object component extends PluginComponent {
     override val global: Global = plugin.global
     override val phaseName: String = "marshaller-linter"
@@ -18,51 +25,44 @@ class MarshallerLinterPlugin(val global: Global) extends Plugin {
 
     import global._
 
+    // the types of vals or defs that we will reject
+    private val rejectedRhsTypes =
+      List("akka.http.scaladsl.marshalling.Marshaller", "akka.http.scaladsl.unmarshalling.Unmarshaller")
+        .map(name ⇒ rootMirror.getClassIfDefined(name).tpe.erasure)
+    // the permit
+    private val permitAnnotationType = rootMirror.staticClass("org.eigengo.rsa.ScalaPBMarshalling.permit").tpe
+
     override def newPhase(prev: Phase): Phase = new StdPhase(prev) {
-      private val permitTypeName = rootMirror.getClassIfDefined("org.eigengo.rsa.ScalaPBMarshalling.permit")
-      private val rejectedRhsTypes =
-        List("akka.http.scaladsl.marshalling.Marshaller", "akka.http.scaladsl.unmarshalling.Unmarshaller")
-          .map(name ⇒ rootMirror.getClassIfDefined(name).tpe.erasure)
-      private type Rejection = String
-
-
-      private def mapRhs(rhs: Tree): Option[Rejection] = {
-        if (rhs.tpe <:< definitions.NullTpe) None
-        else rejectedRhsTypes.find(rejectedType ⇒ rhs.tpe.dealiasWiden.erasure <:< rejectedType).map(_.toString())
-      }
 
       override def apply(unit: CompilationUnit): Unit = {
+
+        // Expands all child trees of ``tree``, returning flattened iterator of trees.
         def allTrees(tree: Tree): Iterator[Tree] =
           Iterator(tree, analyzer.macroExpandee(tree)).filter(_ != EmptyTree)
             .flatMap(t ⇒ Iterator(t) ++ t.children.iterator.flatMap(allTrees))
 
-        def suppressedTree(tree: Tree) = tree match {
-          case Annotated(annot, arg) if !annot.tpe.hasAnnotation(permitTypeName) ⇒
-            global.inform("A>>>>>>>>>>>>> " + annot.tpe.annotations.toString())
-            Some(arg)
-          case typed@Typed(expr, tpt) if !expr.tpe.hasAnnotation(permitTypeName) ⇒
-            global.inform("T>>>>>>>>>>>>> " + expr.tpe.annotations.toString())
-            Some(typed)
-          case md: MemberDef if !md.symbol.hasAnnotation(permitTypeName) ⇒
-            md.symbol.annotations.foreach { a ⇒
-              global.inform(a.toString + " -> " + permitTypeName.toString())
-              if (a.tpe <:< permitTypeName.tpe) global.inform("ADFSFASDFSDFSF")
-            }
-            global.inform("M>>>>>>>>>>>>> " + md.symbol.annotations.toString())
-            Some(md)
-          case _ => None
+        // checks that the permit annotation is present on the given ``symbol``.
+        def hasPermitAnnotation(symbol: global.Symbol): Boolean = {
+          Option(symbol).forall(_.annotations.exists(_.tpe <:< permitAnnotationType))
         }
 
-        val suppressedTrees = allTrees(unit.body).flatMap(suppressedTree).toList
 
-        suppressedTrees.foreach {
-          case d@ValDef(mods, _, _, rhs) ⇒
-            mapRhs(rhs).foreach { rejection ⇒
+        type Rejection = String
+
+        // checks the tree for disallowed type
+        def rejectHandRolled(tree: Tree): Option[Rejection] = {
+          if (tree.tpe <:< definitions.NullTpe) None
+          else rejectedRhsTypes.find(rejectedType ⇒ tree.tpe.dealiasWiden.erasure <:< rejectedType).map(_.toString())
+        }
+
+        // check all expanded trees of each compilation unit
+        allTrees(unit.body).foreach {
+          case d@ValDef(mods, _, _, rhs) if !hasPermitAnnotation(rhs.symbol) ⇒
+            rejectHandRolled(rhs).foreach { rejection ⇒
               global.globalError(d.pos, s"Cannot hand-roll val of type $rejection.")
             }
-          case d@DefDef(mods, _, _, _, _, rhs) if mods.isImplicit ⇒
-            mapRhs(rhs).foreach { rejection ⇒
-              global.inform(d.pos, d.tpe.annotations.toString())
+          case d@DefDef(mods, _, _, _, tpt, rhs) if mods.isImplicit && !hasPermitAnnotation(d.symbol) ⇒
+            rejectHandRolled(rhs).orElse(rejectHandRolled(tpt)).foreach { rejection ⇒
               global.globalError(d.pos, s"Cannot hand-roll implicit def returning $rejection.")
             }
           case _ ⇒ // noop

@@ -1,8 +1,9 @@
 package org.eigengo.rsa.captioning
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.marshalling.{Marshalling, ToEntityMarshaller}
+import akka.http.scaladsl.marshalling.{Marshaller, Marshalling, ToEntityMarshaller}
 import akka.http.scaladsl.model.{ContentType, ContentTypes, HttpEntity, MessageEntity}
+import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.stream.ActorMaterializer
 import org.eigengo.protobufcheck.{ProtobufGen, ProtobufMatchers}
@@ -55,7 +56,21 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
       items = Seq(v200.Caption.Item(accuracy = 1, kind = Kind.Category("foo")), v200.Caption.Item(accuracy = 1, kind = Kind.NamedPerson("bar"))),
       corpus = v200.Caption.Corpus.UNIVERSAL)
 
-    implicit val _: Unmarshaller[HttpEntity, v200.Caption] = scalaPBFromRequestUnmarshaller(v200.Caption)
+    implicit def someMarshaller: ToEntityMarshaller[v100.Caption] = {
+      Marshaller.withFixedContentType(ContentTypes.`application/json`)(_ ⇒ HttpEntity.Empty)
+    }
+
+    implicit def someMarshaller2 = {
+      Marshaller.withFixedContentType(ContentTypes.`application/json`)((_: v100.Caption) ⇒ HttpEntity.Empty)
+    }
+
+    implicit def someMarshaller3: ToEntityMarshaller[v100.Caption] = ???
+
+    implicit val x1: Unmarshaller[HttpEntity, v200.Caption] = Unmarshaller.withMaterializer[HttpEntity, v200.Caption](_ ⇒ implicit mat ⇒ {
+      _ ⇒ Future.failed(UnsupportedContentTypeException())
+    })
+
+    val x2: Unmarshaller[HttpEntity, v200.Caption] = scalaPBFromRequestUnmarshaller(v200.Caption)
 
     inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`)
 

@@ -43,12 +43,12 @@ lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(protobufTestkit % Test)
   .dependsOn(linterPlugin % Compile)
+
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
-  .settings(Seq(scalacOptions += "-Xplugin:/Users/janmachacek/.ivy2/local/org.eigengo/linterplugin_2.11/1.0-SNAPSHOT/jars/linterplugin_2.11.jar"))
+  .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
-  .settings(libraryDependencies += compilerPlugin((projectID in linterPlugin).value))
   .settings(Seq(
     libraryDependencies += Dependencies.akkaActor,
     libraryDependencies += Dependencies.akkaHttpCore,
@@ -63,6 +63,10 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
   resolvers += "Maven central" at "http://repo1.maven.org/maven2/",
   autoCompilerPlugins := true
+)
+
+lazy val linterSettings: Seq[Setting[_]] = Seq(
+  scalacOptions += "-Xplugin:" + ((classDirectory in linterPlugin) in Compile).value
 )
 
 def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
