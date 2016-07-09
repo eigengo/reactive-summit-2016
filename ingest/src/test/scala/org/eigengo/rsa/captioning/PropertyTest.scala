@@ -2,8 +2,8 @@ package org.eigengo.rsa.captioning
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshalling.{Marshalling, ToEntityMarshaller}
-import akka.http.scaladsl.model.{ContentType, ContentTypes, MessageEntity}
-import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.model.{ContentType, ContentTypes, HttpEntity, MessageEntity}
+import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.stream.ActorMaterializer
 import org.eigengo.protobufcheck.{ProtobufGen, ProtobufMatchers}
 import org.eigengo.rsa.ScalaPBMarshalling
@@ -55,7 +55,7 @@ class PropertyTest extends FlatSpec with ProtobufMatchers with PropertyChecks wi
       items = Seq(v200.Caption.Item(accuracy = 1, kind = Kind.Category("foo")), v200.Caption.Item(accuracy = 1, kind = Kind.NamedPerson("bar"))),
       corpus = v200.Caption.Corpus.UNIVERSAL)
 
-    implicit val _ = scalaPBFromRequestUnmarshaller(v200.Caption)
+    implicit val _: Unmarshaller[HttpEntity, v200.Caption] = scalaPBFromRequestUnmarshaller(v200.Caption)
 
     inOut(x, ContentTypes.`application/json`, ContentTypes.`application/octet-stream`)
 

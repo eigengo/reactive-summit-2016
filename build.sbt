@@ -22,12 +22,6 @@ lazy val protobufTestkit = project.in(file("protobuf-testkit"))
   ))
 
 lazy val linterPlugin = project.in(file("linter-plugin"))
-  .settings(
-    crossScalaVersions := Seq(scalaVersion.value, "2.10.6"),
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
-    )
-  )
   .settings(commonSettings)
   .settings(Seq(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
@@ -52,6 +46,7 @@ lazy val ingest = project.in(file("ingest"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
+  .settings(Seq(scalacOptions += "-Xplugin:/Users/janmachacek/.ivy2/local/org.eigengo/linterplugin_2.11/1.0-SNAPSHOT/jars/linterplugin_2.11.jar"))
   .settings(protobufSettings(Seq(protocol)))
   .settings(libraryDependencies += compilerPlugin((projectID in linterPlugin).value))
   .settings(Seq(
