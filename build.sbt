@@ -6,22 +6,16 @@ scalaVersion in ThisBuild := "2.11.8"
 lazy val protocol = project.in(file("protocol"))
   .settings(commonSettings)
 
-lazy val protobufTestkit = project.in(file("protobuf-testkit"))
+lazy val `protobuf-testkit` = project.in(file("protobuf-testkit"))
   .settings(commonSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.scalaTest,
     libraryDependencies += Dependencies.scalaCheck,
     libraryDependencies += Dependencies.protobuf,
-    libraryDependencies += Dependencies.scalaPbRuntime
-
-    // TODO: complete me
-    //PB.externalIncludePath in PB.protobufConfig := (classDirectory in Test).value,
-    //sourceDirectories in PB.protobufConfig <+= (sourceDirectory in Test)(_ / "resources"),
-    //javaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated"),
-    //scalaSource in PB.protobufConfig <<= (sourceDirectory in Test)(_ / "generated")
+    libraryDependencies += Dependencies.scalapb.runtime
   ))
 
-lazy val linterPlugin = project.in(file("linter-plugin"))
+lazy val `linter-plugin` = project.in(file("linter-plugin"))
   .settings(commonSettings)
   .settings(Seq(
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
@@ -33,16 +27,17 @@ lazy val analytics = project.in(file("analytics"))
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
 
-lazy val analyticsUi = project.in(file("analytics-ui"))
+lazy val `analytics-ui` = project.in(file("analytics-ui"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
 
-lazy val ingest = project.in(file("ingest"))
+lazy val `simple-vision` = project.in(file("simple-vision"))
+  .settings(commonSettings)
   .dependsOn(protocol % PB.protobufConfig.name)
-  .dependsOn(protobufTestkit % Test)
-  .dependsOn(linterPlugin % Compile)
+  .dependsOn(`protobuf-testkit` % Test)
+  .dependsOn(`linter-plugin` % Compile)
 
   .settings(commonSettings)
   .settings(dockerSettings)
@@ -50,10 +45,26 @@ lazy val ingest = project.in(file("ingest"))
   .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
   .settings(Seq(
-    libraryDependencies += Dependencies.akkaActor,
-    libraryDependencies += Dependencies.akkaHttpCore,
-    libraryDependencies += Dependencies.akkaHttpExperimental,
-    libraryDependencies += Dependencies.scalaPbJson4s
+    libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.boofcv.core,
+    libraryDependencies += Dependencies.scalapb.json4s
+  ))
+
+lazy val ingest = project.in(file("ingest"))
+  .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(`protobuf-testkit` % Test)
+  .dependsOn(`linter-plugin` % Compile)
+
+  .settings(commonSettings)
+  .settings(dockerSettings)
+  .settings(serverSettings)
+  .settings(linterSettings)
+  .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+    libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.akka.http.core,
+    libraryDependencies += Dependencies.akka.http.experimental,
+    libraryDependencies += Dependencies.scalapb.json4s
   ))
 
 // addCompilerPlugin("org.eigengo" %% "linterplugin" % "1.0-SNAPSHOT")
@@ -66,7 +77,7 @@ lazy val commonSettings = Seq(
 )
 
 lazy val linterSettings: Seq[Setting[_]] = Seq(
-  scalacOptions += "-Xplugin:" + ((classDirectory in linterPlugin) in Compile).value
+  scalacOptions += "-Xplugin:" + ((classDirectory in `linter-plugin`) in Compile).value
 )
 
 def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
