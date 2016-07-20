@@ -44,11 +44,9 @@ lazy val storytelling = project.in(file("storytelling"))
   .settings(serverSettings)
   .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(deeplearning4jSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
-    libraryDependencies += Dependencies.deeplearning4j.core,
-    libraryDependencies += Dependencies.nd4j.api,
-    libraryDependencies += Dependencies.nd4j.native,
     libraryDependencies += Dependencies.scalapb.json4s
   ))
 
@@ -63,9 +61,9 @@ lazy val `vision` = project.in(file("vision"))
   .settings(serverSettings)
   .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(deeplearning4jSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
-    libraryDependencies += Dependencies.deeplearning4j.core,
     libraryDependencies += Dependencies.cats,
     libraryDependencies += Dependencies.scalapb.json4s
   ))
@@ -88,6 +86,14 @@ lazy val ingest = project.in(file("ingest"))
   ))
 
 // addCompilerPlugin("org.eigengo" %% "linterplugin" % "1.0-SNAPSHOT")
+
+lazy val deeplearning4jSettings = Seq(
+  classpathTypes += "maven-plugin",
+  libraryDependencies += Dependencies.nd4j.api excludeAll(Dependencies.nd4j.exclusionRules:_*),
+  libraryDependencies += Dependencies.nd4j.native excludeAll(Dependencies.nd4j.exclusionRules:_*),
+  libraryDependencies += Dependencies.deeplearning4j.core,
+  libraryDependencies += Dependencies.javacpp
+)
 
 lazy val commonSettings = Seq(
   organization := "org.eigengo",

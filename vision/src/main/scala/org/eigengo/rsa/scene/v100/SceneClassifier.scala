@@ -18,17 +18,43 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import java.io.ByteArrayInputStream
-import javax.imageio.ImageIO
+import java.io._
 
-import scala.util.Try
+import cats.data.Xor
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.deeplearning4j.util.NetSaverLoaderUtils
+import org.nd4j.linalg.factory.Nd4j
 
-class SceneClassifier {
+import scala.io.Source
 
-  def classify(scene: Array[Byte]): Try[Scene] = {
-    for {
-      image ← Try(ImageIO.read(new ByteArrayInputStream(scene)))
+class SceneClassifier private(network: MultiLayerNetwork) {
 
+  def classify(scene: Array[Byte]): Throwable Xor Scene = {
+    Xor.left(new NotImplementedError())
+  }
+
+}
+
+object SceneClassifier {
+
+  def apply(basePath: String): Throwable Xor SceneClassifier = {
+    val configFile = s"$basePath.json"
+    val paramsFile = s"$basePath.bin"
+
+    if (!new File(configFile).exists()) Xor.left(new FileNotFoundException(configFile))
+    else if (!new File(paramsFile).exists()) Xor.left(new FileNotFoundException(paramsFile))
+    else Xor.catchNonFatal {
+      val configJson = Source.fromFile(configFile).mkString
+      val networkConfiguration: MultiLayerConfiguration = MultiLayerConfiguration.fromJson(configJson)
+      val is = new DataInputStream(new BufferedInputStream(new FileInputStream(paramsFile)))
+      val params = Nd4j.read(is)
+      is.close()
+
+      val network = new MultiLayerNetwork(networkConfiguration)
+      network.init()
+      network.setParams(params)
+      new SceneClassifier(network)
     }
   }
 

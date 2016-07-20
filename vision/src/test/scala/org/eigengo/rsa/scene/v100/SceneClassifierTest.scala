@@ -18,11 +18,23 @@
  */
 package org.eigengo.rsa.scene.v100
 
+import java.io.FileNotFoundException
+
+import cats.data.Xor
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
 
 class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
 
+  "Missing network configuration" should "be well reported" in {
+    val Xor.Left(ex) = SceneClassifier("/nothere")
+    ex should be (a[FileNotFoundException])
+  }
+
+  "Bad image" should "be left" in {
+    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Eigengo/stuff")
+    classifier.classify(Array.emptyByteArray).isLeft should be (true)
+  }
 
 
 }
