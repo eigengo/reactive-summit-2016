@@ -26,14 +26,21 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
 
+  private def readAsBytes(resourceName: String): Array[Byte] = {
+    val is = getClass.getResourceAsStream(resourceName)
+    Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+  }
+
   "Missing network configuration" should "be well reported" in {
     val Xor.Left(ex) = SceneClassifier("/nothere")
     ex should be (a[FileNotFoundException])
   }
 
-  "Bad image" should "be left" in {
+  "Cake image" should "be classified as cake" in {
     val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Eigengo/stuff")
-    classifier.classify(Array.emptyByteArray).isLeft should be (true)
+    val Xor.Right(cake) = classifier.classify(readAsBytes("/cake.jpg"))
+    println(cake)
+    fail("Bantha poodoo!")
   }
 
 

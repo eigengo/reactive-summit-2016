@@ -23,7 +23,7 @@ import java.io._
 import cats.data.Xor
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.deeplearning4j.util.NetSaverLoaderUtils
+import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
 import scala.io.Source
@@ -31,6 +31,7 @@ import scala.io.Source
 class SceneClassifier private(network: MultiLayerNetwork) {
 
   def classify(scene: Array[Byte]): Throwable Xor Scene = {
+    // network.predict()
     Xor.left(new NotImplementedError())
   }
 
@@ -39,23 +40,36 @@ class SceneClassifier private(network: MultiLayerNetwork) {
 object SceneClassifier {
 
   def apply(basePath: String): Throwable Xor SceneClassifier = {
-    val configFile = s"$basePath.json"
-    val paramsFile = s"$basePath.bin"
 
-    if (!new File(configFile).exists()) Xor.left(new FileNotFoundException(configFile))
-    else if (!new File(paramsFile).exists()) Xor.left(new FileNotFoundException(paramsFile))
-    else Xor.catchNonFatal {
+    def loadNetworkConfiguration(configFile: String): Throwable Xor MultiLayerConfiguration = Xor.catchNonFatal {
+      if (!new File(configFile).exists()) Xor.left(new FileNotFoundException(configFile))
       val configJson = Source.fromFile(configFile).mkString
-      val networkConfiguration: MultiLayerConfiguration = MultiLayerConfiguration.fromJson(configJson)
+      MultiLayerConfiguration.fromJson(configJson)
+    }
+
+    def loadParams(paramsFile: String): Throwable Xor INDArray = Xor.catchNonFatal {
+      if (!new File(paramsFile).exists()) Xor.left(new FileNotFoundException(paramsFile))
       val is = new DataInputStream(new BufferedInputStream(new FileInputStream(paramsFile)))
       val params = Nd4j.read(is)
       is.close()
+      params
+    }
 
-      val network = new MultiLayerNetwork(networkConfiguration)
+    def initializeNetwork(configuration: MultiLayerConfiguration, params: INDArray): MultiLayerNetwork = {
+      val network = new MultiLayerNetwork(configuration)
       network.init()
       network.setParams(params)
-      new SceneClassifier(network)
+      network
     }
+
+    val configFile = s"$basePath.json"
+    val paramsFile = s"$basePath.bin"
+
+    for {
+      configuration ← loadNetworkConfiguration(configFile)
+      params ← loadParams(paramsFile)
+      network = initializeNetwork(configuration, params)
+    } yield new SceneClassifier(network)
   }
 
 }
