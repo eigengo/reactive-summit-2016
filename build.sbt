@@ -33,7 +33,7 @@ lazy val `analytics-ui` = project.in(file("analytics-ui"))
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
 
-lazy val `simple-vision` = project.in(file("simple-vision"))
+lazy val storytelling = project.in(file("storytelling"))
   .settings(commonSettings)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
@@ -46,7 +46,27 @@ lazy val `simple-vision` = project.in(file("simple-vision"))
   .settings(protobufSettings(Seq(protocol)))
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
-    libraryDependencies += Dependencies.boofcv.core,
+    libraryDependencies += Dependencies.deeplearning4j.core,
+    libraryDependencies += Dependencies.nd4j.api,
+    libraryDependencies += Dependencies.nd4j.native,
+    libraryDependencies += Dependencies.scalapb.json4s
+  ))
+
+lazy val `vision` = project.in(file("vision"))
+  .settings(commonSettings)
+  .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(`protobuf-testkit` % Test)
+  .dependsOn(`linter-plugin` % Compile)
+
+  .settings(commonSettings)
+  .settings(dockerSettings)
+  .settings(serverSettings)
+  .settings(linterSettings)
+  .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+    libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.deeplearning4j.core,
+    libraryDependencies += Dependencies.cats,
     libraryDependencies += Dependencies.scalapb.json4s
   ))
 

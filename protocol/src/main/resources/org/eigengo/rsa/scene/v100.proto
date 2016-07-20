@@ -1,0 +1,9 @@
+package org.eigengo.rsa.scene.v100;
+
+message Scene {
+    message Label {
+        required string label = 1;
+        required double score = 2;
+    }
+    repeated Label labels = 3;
+}
