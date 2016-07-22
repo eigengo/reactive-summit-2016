@@ -54,6 +54,12 @@ object Dependencies {
     val core = "org.deeplearning4j" % "deeplearning4j-core" % version
   }
 
+  object imageio {
+    private val version = "3.1.1"
+
+    val core = "com.twelvemonkeys.imageio" % "imageio-core" % version
+  }
+
   object boofcv {
     val core = "org.boofcv" % "core" % "0.24.1"
   }

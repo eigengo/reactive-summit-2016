@@ -92,6 +92,7 @@ lazy val deeplearning4jSettings = Seq(
   libraryDependencies += Dependencies.nd4j.api excludeAll(Dependencies.nd4j.exclusionRules:_*),
   libraryDependencies += Dependencies.nd4j.native excludeAll(Dependencies.nd4j.exclusionRules:_*),
   libraryDependencies += Dependencies.deeplearning4j.core,
+  libraryDependencies += Dependencies.imageio.core,
   libraryDependencies += Dependencies.javacpp
 )
 

@@ -18,7 +18,7 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import java.io.FileNotFoundException
+import java.io.{File, FileInputStream, FileNotFoundException, InputStream}
 
 import cats.data.Xor
 import org.scalatest.prop.PropertyChecks
@@ -26,9 +26,20 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
 
-  private def readAsBytes(resourceName: String): Array[Byte] = {
-    val is = getClass.getResourceAsStream(resourceName)
-    Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+  /**
+    * Finds all images in classpath resource ``/scene``, and applies
+    * ``block`` to each
+    *
+    * @param block the block to be applied to each resource under ``/scene``
+    */
+  private def forAllScenes[U](block: (InputStream, String) ⇒ U): Unit = {
+    val scene = new File(getClass.getResource("/scene").toURI)
+    scene.listFiles().foreach { file ⇒
+      val splits = file.getName.split("\\.")
+      val is = new FileInputStream(file)
+      block(is, splits(0))
+      is.close()
+    }
   }
 
   "Missing network configuration" should "be well reported" in {
@@ -36,12 +47,17 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
     ex should be (a[FileNotFoundException])
   }
 
-  "Cake image" should "be classified as cake" in {
+  "Image classification" should "predict correct labels" in {
     val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Eigengo/stuff")
-    val Xor.Right(cake) = classifier.classify(readAsBytes("/cake.jpg"))
-    println(cake)
-    fail("Bantha poodoo!")
-  }
 
+    forAllScenes { (stream, label) ⇒
+      val Xor.Right(scene) = classifier.classify(stream)
+
+      scene.labels.length should be (1)
+      val firstLabel = scene.labels.head
+      firstLabel.label should be (label)
+      firstLabel.score should be > 0.8
+    }
+  }
 
 }
