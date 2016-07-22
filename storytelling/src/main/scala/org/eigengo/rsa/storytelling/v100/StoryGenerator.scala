@@ -18,8 +18,28 @@
  */
 package org.eigengo.rsa.storytelling.v100
 
-class StoryGenerator {
+import cats.data.Xor
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
-  def generate(command: GenerateStory): GeneratedStory = ???
+import scala.io.Source
+
+class StoryGenerator private(network: MultiLayerNetwork, characters: List[Char]) {
+
+  def generate(initialization: String): String = ???
+
+}
+
+object StoryGenerator {
+
+  def apply(basePath: String): Throwable Xor StoryGenerator = {
+    val charactersFile = s"$basePath.characters"
+
+    for {
+      network    ← NetworkLoader.loadMultiLayerNetwork(basePath)
+      characters ← Xor.catchNonFatal(Source.fromFile(charactersFile).toList)
+    } yield new StoryGenerator(network, characters)
+
+  }
 
 }

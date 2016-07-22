@@ -85,12 +85,11 @@ object SceneClassifier {
     * @return error or constructed classifier
     */
   def apply(basePath: String): Throwable Xor SceneClassifier = {
-
     val labelsFile = s"$basePath.labels"
 
     for {
       network ← NetworkLoader.loadMultiLayerNetwork(basePath)
-      labels ← Xor.catchNonFatal(Source.fromFile(labelsFile).getLines().toList)
+      labels  ← Xor.catchNonFatal(Source.fromFile(labelsFile).getLines().toList)
     } yield new SceneClassifier(network, labels)
   }
 

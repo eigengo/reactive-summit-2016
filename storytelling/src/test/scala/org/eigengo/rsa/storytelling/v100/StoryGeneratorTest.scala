@@ -18,19 +18,15 @@
  */
 package org.eigengo.rsa.storytelling.v100
 
+import cats.data.Xor
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 
 class StoryGeneratorTest extends FlatSpec with PropertyChecks with Matchers {
 
-  "Story generator" should "generate stories from the right corpus" in {
-    val command = GenerateStory(
-      seedWords = List("beer", "cake"),
-      corpus = GenerateStory.Corpus.VERYBRITISHPROBLEMS,
-      limit = 200,
-      locale = Some("en_GB")
-    )
-    val response = new StoryGenerator().generate(command)
+  "Story generator" should "generate plausible text" in {
+    val Xor.Right(generator) = StoryGenerator("/Users/janmachacek/Dropbox/shakespeare")
+    val response = generator.generate("beer cake")
 
     println(response)
 
