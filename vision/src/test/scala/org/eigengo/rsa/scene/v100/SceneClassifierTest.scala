@@ -48,7 +48,7 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
   }
 
   "Image classification" should "predict correct labels" in {
-    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Eigengo/stuff")
+    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Dropbox/stuff")
 
     forAllScenes { (stream, label) ⇒
       val Xor.Right(scene) = classifier.classify(stream)
