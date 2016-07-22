@@ -33,11 +33,20 @@ lazy val `analytics-ui` = project.in(file("analytics-ui"))
   .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
 
-lazy val storytelling = project.in(file("storytelling"))
+lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
   .settings(commonSettings)
+  .settings(deeplearning4jSettings)
+  .settings(Seq(
+    libraryDependencies += Dependencies.cats,
+    libraryDependencies += Dependencies.scalaTest % Test,
+    libraryDependencies += Dependencies.scalaCheck % Test
+  ))
+
+lazy val storytelling = project.in(file("storytelling"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
+  .dependsOn(`deeplearning4j-common`)
 
   .settings(commonSettings)
   .settings(dockerSettings)
@@ -51,10 +60,10 @@ lazy val storytelling = project.in(file("storytelling"))
   ))
 
 lazy val `vision` = project.in(file("vision"))
-  .settings(commonSettings)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
+  .dependsOn(`deeplearning4j-common`)
 
   .settings(commonSettings)
   .settings(dockerSettings)

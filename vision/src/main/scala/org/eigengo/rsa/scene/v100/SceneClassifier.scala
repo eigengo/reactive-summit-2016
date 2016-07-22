@@ -22,10 +22,8 @@ import java.io._
 
 import cats.data.Xor
 import org.canova.image.loader.ImageLoader
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.nd4j.linalg.api.ndarray.INDArray
-import org.nd4j.linalg.factory.Nd4j
+import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
 import scala.io.Source
 
@@ -88,36 +86,11 @@ object SceneClassifier {
     */
   def apply(basePath: String): Throwable Xor SceneClassifier = {
 
-    def loadNetworkConfiguration(configFile: String): Throwable Xor MultiLayerConfiguration = Xor.catchNonFatal {
-      if (!new File(configFile).exists()) Xor.left(new FileNotFoundException(configFile))
-      val configJson = Source.fromFile(configFile).mkString
-      MultiLayerConfiguration.fromJson(configJson)
-    }
-
-    def loadParams(paramsFile: String): Throwable Xor INDArray = Xor.catchNonFatal {
-      if (!new File(paramsFile).exists()) Xor.left(new FileNotFoundException(paramsFile))
-      val is = new DataInputStream(new BufferedInputStream(new FileInputStream(paramsFile)))
-      val params = Nd4j.read(is)
-      is.close()
-      params
-    }
-
-    def initializeNetwork(configuration: MultiLayerConfiguration, params: INDArray): MultiLayerNetwork = {
-      val network = new MultiLayerNetwork(configuration)
-      network.init()
-      network.setParams(params)
-      network
-    }
-
-    val configFile = s"$basePath.json"
-    val paramsFile = s"$basePath.bin"
     val labelsFile = s"$basePath.labels"
 
     for {
-      configuration ← loadNetworkConfiguration(configFile)
-      params ← loadParams(paramsFile)
+      network ← NetworkLoader.loadMultiLayerNetwork(basePath)
       labels ← Xor.catchNonFatal(Source.fromFile(labelsFile).getLines().toList)
-      network = initializeNetwork(configuration, params)
     } yield new SceneClassifier(network, labels)
   }
 
