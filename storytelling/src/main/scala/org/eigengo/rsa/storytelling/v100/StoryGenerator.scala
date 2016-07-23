@@ -26,14 +26,17 @@ import scala.io.Source
 
 class StoryGenerator private(network: MultiLayerNetwork, characters: List[Char]) {
 
-  def generate(initialization: String): String = ???
+  def generate(initialization: String): String = {
+    network.rnnClearPreviousState()
+    network.rnnTimeStep()
+  }
 
 }
 
 object StoryGenerator {
 
   def apply(basePath: String): Throwable Xor StoryGenerator = {
-    val charactersFile = s"$basePath.characters"
+    val charactersFile = s"$basePath.chars"
 
     for {
       network    ← NetworkLoader.loadMultiLayerNetwork(basePath)
