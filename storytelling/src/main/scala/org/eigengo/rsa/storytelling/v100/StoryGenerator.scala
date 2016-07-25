@@ -37,18 +37,18 @@ class StoryGenerator private(network: MultiLayerNetwork, characters: List[Char])
 
   def generate(inputString: String, outputLength: Int): String = {
     val input = Nd4j.zeros(1, characters.length, inputString.length)
-    for (i ← 0 until inputString.length) {
-      val idx = characters.indexOf(inputString.charAt(i))
-      input.putScalar(Array(0, idx, i), 1.0)
+    inputString.zipWithIndex.foreach { case (c, i) ⇒
+      val ci = characters.indexOf(c)
+      input.putScalar(Array(0, ci, i), 1.0)
     }
 
     network.rnnClearPreviousState()
     val output = network.rnnTimeStep(input)
     val lastTimeStep = output.tensorAlongDimension(output.size(2) - 1, 1, 0)
-    (0 until outputLength).foldLeft(("", lastTimeStep)) { case ((text, output), _) ⇒
+    (0 until outputLength).foldLeft(("", lastTimeStep)) { case ((text, x), _) ⇒
       val nextInput = Nd4j.zeros(1, characters.length)
-      val outputProbDistribution = characters.indices.map { i ⇒ output.getDouble(0, i) }
-      val sampledCharacterIdx: Int = sampleFromDistribution(outputProbDistribution)
+      val outputProbDistribution = characters.indices.map { i ⇒ x.getDouble(0, i) }
+      val sampledCharacterIdx = sampleFromDistribution(outputProbDistribution)
 
       nextInput.putScalar(Array[Int](0, sampledCharacterIdx), 1.0f) //Prepare next time step input
 
