@@ -25,8 +25,8 @@ import org.scalatest.prop.PropertyChecks
 class StoryGeneratorTest extends FlatSpec with PropertyChecks with Matchers {
 
   "Story generator" should "generate plausible text" in {
-    val Xor.Right(generator) = StoryGenerator("/Users/janmachacek/Dropbox/shakespeare")
-    val response = generator.generate("beer cake")
+    val Xor.Right(generator) = StoryGenerator("/Users/janmachacek/Dropbox/Models/shakespeare")
+    val response = generator.generate("beer cake", 300)
 
     println(response)
 

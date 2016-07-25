@@ -21,14 +21,39 @@ package org.eigengo.rsa.storytelling.v100
 import cats.data.Xor
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
+import org.nd4j.linalg.factory.Nd4j
 
 import scala.io.Source
 
 class StoryGenerator private(network: MultiLayerNetwork, characters: List[Char]) {
 
-  def generate(initialization: String): String = {
+  private def sampleFromDistribution(distribution: Seq[Double]): Int = {
+    val d = math.random
+    distribution.foldLeft((0, 0.0)) { case (r@(ri, sum), element) ⇒
+      if (sum > d) r
+      else (ri + 1, sum + element)
+    }._1
+  }
+
+  def generate(inputString: String, outputLength: Int): String = {
+    val input = Nd4j.zeros(1, characters.length, inputString.length)
+    for (i ← 0 until inputString.length) {
+      val idx = characters.indexOf(inputString.charAt(i))
+      input.putScalar(Array(0, idx, i), 1.0)
+    }
+
     network.rnnClearPreviousState()
-    network.rnnTimeStep()
+    val output = network.rnnTimeStep(input)
+    val lastTimeStep = output.tensorAlongDimension(output.size(2) - 1, 1, 0)
+    (0 until outputLength).foldLeft(("", lastTimeStep)) { case ((text, output), _) ⇒
+      val nextInput = Nd4j.zeros(1, characters.length)
+      val outputProbDistribution = characters.indices.map { i ⇒ output.getDouble(0, i) }
+      val sampledCharacterIdx: Int = sampleFromDistribution(outputProbDistribution)
+
+      nextInput.putScalar(Array[Int](0, sampledCharacterIdx), 1.0f) //Prepare next time step input
+
+      (text + characters(sampledCharacterIdx), network.rnnTimeStep(nextInput))
+    }._1
   }
 
 }
