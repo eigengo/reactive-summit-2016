@@ -27,7 +27,7 @@ import org.eigengo.rsa.Envelope
 
 import scala.concurrent.{Await, Future}
 
-object LoadTest {
+object MainTest {
 
   def main(args: Array[String]): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global

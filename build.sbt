@@ -145,7 +145,7 @@ lazy val dockerSettings = Seq(
   dockerBaseImage := "cakesolutions/alpine-dcos-base:latest",
   dockerUpdateLatest := true,
   dockerRepository := Some("eigengo"),
-  packageName in Docker := s"rs16-${name.value}",
+  packageName in Docker := s"rsa16-${name.value}",
   maintainer in Docker := "Eigengo <state@eigengo.org>",
   version in Docker := sys.props.getOrElse("tag", default = version.value),
   daemonUser in Docker := "root"
