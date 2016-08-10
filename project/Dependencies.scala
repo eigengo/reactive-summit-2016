@@ -10,6 +10,10 @@ object Dependencies {
 
   val cats = "org.typelevel" %% "cats" % "0.6.1"
 
+  object cakesolutions {
+    val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.8.0"
+  }
+
   object scalapb {
     val runtime = "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
     val json4s = "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.1"

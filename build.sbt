@@ -42,7 +42,7 @@ lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
     libraryDependencies += Dependencies.scalaCheck % Test
   ))
 
-lazy val storytelling = project.in(file("storytelling"))
+lazy val `vision-identity` = project.in(file("vision-identity"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
@@ -59,7 +59,7 @@ lazy val storytelling = project.in(file("storytelling"))
     libraryDependencies += Dependencies.scalapb.json4s
   ))
 
-lazy val `vision` = project.in(file("vision"))
+lazy val `vision-scene-classification` = project.in(file("vision-scene-classification"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
@@ -74,7 +74,19 @@ lazy val `vision` = project.in(file("vision"))
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
     libraryDependencies += Dependencies.cats,
-    libraryDependencies += Dependencies.scalapb.json4s
+    libraryDependencies += Dependencies.scalapb.json4s,
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
+  ))
+
+lazy val `vision-scene-classification-it` = project.in(file("vision-scene-classification-it"))
+  .dependsOn(protocol % PB.protobufConfig.name)
+
+  .settings(commonSettings)
+  .settings(dockerSettings)
+  .settings(serverSettings)
+  .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
 lazy val ingest = project.in(file("ingest"))
@@ -109,6 +121,7 @@ lazy val commonSettings = Seq(
   organization := "org.eigengo",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
   resolvers += "Maven central" at "http://repo1.maven.org/maven2/",
+  resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   autoCompilerPlugins := true
 )
 
@@ -117,8 +130,8 @@ lazy val linterSettings: Seq[Setting[_]] = Seq(
 )
 
 def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSettings ++ Seq(
-  version in PB.protobufConfig := "3.0.0-beta-3",
-  PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v261" +: args.toArray)),
+  version in PB.protobufConfig := "3.0.0",
+  PB.runProtoc in PB.protobufConfig := (args => com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray)),
   javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   scalaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   PB.flatPackage in PB.protobufConfig := true,

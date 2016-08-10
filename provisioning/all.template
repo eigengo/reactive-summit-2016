@@ -1,0 +1,22 @@
+version: '2'
+services:
+  cassandra:
+    image: cassandra:2.1
+
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+
+  kafka:
+    image: wurstmeister/kafka:0.9.0.1
+
+  metering:
+    image: cakesolutions/iot-demo-metering:local
+
+  submission:
+    image: cakesolutions/iot-demo-submission:local
+
+  simulation:
+    image: cakesolutions/iot-demo-simulation:local
+
+  ui:
+    image: cakesolutions/iot-demo-ui:local

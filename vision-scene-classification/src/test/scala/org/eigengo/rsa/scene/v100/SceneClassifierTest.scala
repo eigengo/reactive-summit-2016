@@ -42,13 +42,13 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
     }
   }
 
-  "Missing network configuration" should "be well reported" in {
+  it should "properly report missing models" in {
     val Xor.Left(ex) = SceneClassifier("/nothere")
     ex should be (a[FileNotFoundException])
   }
 
-  "Image classification" should "predict correct labels" in {
-    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Dropbox/stuff")
+  it should "predict correct labels" in {
+    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Dropbox/Models/stuff")
 
     forAllScenes { (stream, label) ⇒
       val Xor.Right(scene) = classifier.classify(stream)

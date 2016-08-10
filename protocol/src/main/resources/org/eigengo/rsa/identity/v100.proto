@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package org.eigengo.rsa.identity.v100;
+
+message Identity {
+
+    message IdentifiedFace {
+        string name = 1;
+        double score = 2;
+    }
+
+    message UnknownFace {
+        double score = 1;
+    }
+
+    repeated IdentifiedFace identifiedFaces = 3;
+    repeated UnknownFace unknownFaces = 4;
+}
