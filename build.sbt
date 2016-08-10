@@ -80,10 +80,10 @@ lazy val `vision-scene-classification` = project.in(file("vision-scene-classific
 
 lazy val `vision-scene-classification-it` = project.in(file("vision-scene-classification-it"))
   .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(`protobuf-testkit` % Test)
 
   .settings(commonSettings)
   .settings(dockerSettings)
-  .settings(serverSettings)
   .settings(protobufSettings(Seq(protocol)))
   .settings(Seq(
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient

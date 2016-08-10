@@ -15,7 +15,7 @@ object Dependencies {
   }
 
   object scalapb {
-    val runtime = "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.30"
+    val runtime = "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.38"
     val json4s = "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.1"
   }
 

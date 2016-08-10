@@ -33,13 +33,11 @@ services:
     links:
       - zookeeper
 
-  load:
+  vision-scene-classification-it:
     extends:
       file: all.template
-      service: load
+      service: vision-scene-classification-it
     environment:
-      CASSANDRA_CONTACT_POINTS: cassandra
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
     links:
-      - cassandra
       - kafka

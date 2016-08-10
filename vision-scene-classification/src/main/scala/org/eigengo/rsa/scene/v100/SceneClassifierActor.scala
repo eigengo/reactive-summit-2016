@@ -25,10 +25,8 @@ import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
 import com.typesafe.config.Config
-import org.apache.kafka.common.serialization.{Deserializer, StringDeserializer}
-import org.eigengo.rsa.{Envelope, EnvelopeDeserializer}
-
-import scala.util.Try
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.eigengo.rsa.Envelope
 
 object SceneClassifierActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
@@ -41,9 +39,9 @@ class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) ext
       consumerConf = KafkaConsumer.Conf(
         config.getConfig("consumer-config"),
         keyDeserializer = new StringDeserializer,
-        valueDeserializer = new EnvelopeDeserializer
+        valueDeserializer = new FunDeserializer(Envelope.parseFrom)
       ),
-      actorConf = KafkaConsumerActor.Conf(config.getConfig("comsumer-actor-config")),
+      actorConf = KafkaConsumerActor.Conf(config.getConfig("consumer-actor-config")),
       self
     ),
     "KafkaConsumer"
@@ -57,16 +55,10 @@ class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) ext
   override def receive: Receive = {
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
+        case (None, _) ⇒
+          println("Bantha poodoo!")
         case (Some(handle), envelope) ⇒
-//          val scene = for {
-//            payload ← envelope.payload
-//            imageBytes ← Try(payload.unpack(classOf[Array[Byte]])).toOption
-//            scene ← sceneClassifier.classify(new ByteArrayInputStream(imageBytes)).toOption
-//          } yield scene
-//
-//          // TODO: complete me
-//          scene.foreach(println)
-
+          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(println)
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }

@@ -9,14 +9,5 @@ services:
   kafka:
     image: wurstmeister/kafka:0.9.0.1
 
-  metering:
-    image: cakesolutions/iot-demo-metering:local
-
-  submission:
-    image: cakesolutions/iot-demo-submission:local
-
-  simulation:
-    image: cakesolutions/iot-demo-simulation:local
-
-  ui:
-    image: cakesolutions/iot-demo-ui:local
+  vision-scene-classification-it:
+    image: eigengo/vision-scene-classification-it:local
