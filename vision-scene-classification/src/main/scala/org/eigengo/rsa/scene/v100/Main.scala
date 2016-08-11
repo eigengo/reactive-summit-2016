@@ -19,11 +19,14 @@
 package org.eigengo.rsa.scene.v100
 
 import akka.actor.ActorSystem
+import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val system = ActorSystem("scene-classification:100")
+    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val system = ActorSystem(name = "scene-classification:100", config = config)
+    system.actorOf(SceneClassifierActor.props(config.getConfig("app")))
   }
 
 }

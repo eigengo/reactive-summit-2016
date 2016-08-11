@@ -20,30 +20,35 @@ package org.eigengo.rsa.scene.v100
 
 import java.io.ByteArrayInputStream
 
-import akka.actor.Actor
+import akka.actor.{Actor, Props}
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
+import cats.data.Xor
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.eigengo.rsa.Envelope
 
 object SceneClassifierActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
+
+  def props(config: Config): Props = {
+    val consumerConf = KafkaConsumer.Conf(
+      config.getConfig("kafka.consumer-config"),
+      keyDeserializer = new StringDeserializer,
+      valueDeserializer = new FunDeserializer(Envelope.parseFrom)
+    )
+    val consumerActorConf = KafkaConsumerActor.Conf(config.getConfig("kafka.consumer-actor-config"))
+    val Xor.Right(sceneClassifier) = SceneClassifier(config.getString("scene-classifier.model-path"))
+    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, sceneClassifier)
+  }
+
 }
 
-class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) extends Actor {
+class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[_, _], consumerActorConf: KafkaConsumerActor.Conf, sceneClassifier: SceneClassifier) extends Actor {
   import SceneClassifierActor._
   private[this] val kafkaConsumerActor = context.actorOf(
-    KafkaConsumerActor.props(
-      consumerConf = KafkaConsumer.Conf(
-        config.getConfig("consumer-config"),
-        keyDeserializer = new StringDeserializer,
-        valueDeserializer = new FunDeserializer(Envelope.parseFrom)
-      ),
-      actorConf = KafkaConsumerActor.Conf(config.getConfig("consumer-actor-config")),
-      self
-    ),
+    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
     "KafkaConsumer"
   )
 
@@ -58,6 +63,7 @@ class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) ext
         case (None, _) ⇒
           println("Bantha poodoo!")
         case (Some(handle), envelope) ⇒
+          println(s"Received ${envelope.payload.size()}")
           sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(println)
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
