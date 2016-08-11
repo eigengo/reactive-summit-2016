@@ -18,7 +18,7 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, File}
 
 import akka.actor.{Actor, Props}
 import cakesolutions.kafka.KafkaConsumer
@@ -33,13 +33,15 @@ object SceneClassifierActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
+    val modelPath = new File(getClass.getResource("/models").getFile, "stuff").getAbsolutePath
+    val Xor.Right(sceneClassifier) = SceneClassifier(modelPath)
+
     val consumerConf = KafkaConsumer.Conf(
       config.getConfig("kafka.consumer-config"),
       keyDeserializer = new StringDeserializer,
       valueDeserializer = new FunDeserializer(Envelope.parseFrom)
     )
     val consumerActorConf = KafkaConsumerActor.Conf(config.getConfig("kafka.consumer-actor-config"))
-    val Xor.Right(sceneClassifier) = SceneClassifier(config.getString("scene-classifier.model-path"))
     Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, sceneClassifier)
   }
 

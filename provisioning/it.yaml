@@ -42,3 +42,13 @@ services:
     links:
       - kafka
       - cassandra
+
+  vision-scene-classification:
+    extends:
+      file: all.template
+      service: vision-scene-classification
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    links:
+      - kafka
+      - cassandra

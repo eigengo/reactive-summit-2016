@@ -12,3 +12,6 @@ services:
 
   vision-scene-classification-it:
     image: eigengo/rsa16-vision-scene-classification-it:local
+
+  vision-scene-classification:
+    image: eigengo/rsa16-vision-scene-classification:local
