@@ -20,19 +20,19 @@ package org.eigengo.rsa.scene.v100
 
 import java.io._
 
-import cats.data.Xor
 import org.canova.image.loader.ImageLoader
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 /**
   * Performs classification using the loaded network and matching labels. The number
   * of elements in ``labels`` has to match the number of outputs in the ``network``.
   *
   * @param network the (trained and initialized) network
-  * @param labels the human-readable names in order of network outputs
+  * @param labels  the human-readable names in order of network outputs
   */
 class SceneClassifier private(network: MultiLayerNetwork, labels: List[String]) {
   private val loader = new ImageLoader(100, 100, 3)
@@ -44,8 +44,8 @@ class SceneClassifier private(network: MultiLayerNetwork, labels: List[String]) 
     * @param imageStream the stream containing a loadable image (i.e. png, jpeg, ...)
     * @return error or scene with labels
     */
-  def classify(imageStream: InputStream): Throwable Xor Scene = {
-    Xor.catchNonFatal(loader.asRowVector(imageStream)).flatMap { imageRowVector ⇒
+  def classify(imageStream: InputStream): Try[Scene] = {
+    Try(loader.asRowVector(imageStream)).flatMap { imageRowVector ⇒
       val predictions = network.output(imageRowVector)
       if (predictions.isRowVector) {
         val predictedLabels = (0 until predictions.columns()).flatMap { column ⇒
@@ -54,8 +54,8 @@ class SceneClassifier private(network: MultiLayerNetwork, labels: List[String]) 
             Some(Scene.Label(labels(column), prediction))
           } else None
         }
-        Xor.Right(Scene(predictedLabels))
-      } else Xor.left(SceneClassifier.BadPredictionsShape)
+        Success(Scene(predictedLabels))
+      } else Failure(SceneClassifier.BadPredictionsShape)
     }
   }
 
@@ -81,15 +81,13 @@ object SceneClassifier {
     * - the network parameters in ``basePath.bin``
     * - the labels in ``basePath.labels``
     *
-    * @param basePath the base path
+    * @param resourceAccessor the resource accessor
     * @return error or constructed classifier
     */
-  def apply(basePath: String): Throwable Xor SceneClassifier = {
-    val labelsFile = s"$basePath.labels"
-
+  def apply(resourceAccessor: NetworkLoader.ResourceAccessor): Try[SceneClassifier] = {
     for {
-      network ← NetworkLoader.loadMultiLayerNetwork(basePath)
-      labels  ← Xor.catchNonFatal(Source.fromFile(labelsFile).getLines().toList)
+      network ← NetworkLoader.loadMultiLayerNetwork(resourceAccessor)
+      labels ← resourceAccessor("labels").map(is ⇒ Source.fromInputStream(is).getLines().toList)
     } yield new SceneClassifier(network, labels)
   }
 

@@ -61,12 +61,13 @@ class StoryGenerator private(network: MultiLayerNetwork, characters: List[Char])
 object StoryGenerator {
 
   def apply(basePath: String): Throwable Xor StoryGenerator = {
-    val charactersFile = s"$basePath.chars"
-
-    for {
-      network    ← NetworkLoader.loadMultiLayerNetwork(basePath)
-      characters ← Xor.catchNonFatal(Source.fromFile(charactersFile).toList)
-    } yield new StoryGenerator(network, characters)
+    Xor.Left(new Exception("Not implemented"))
+//    val charactersFile = s"$basePath.chars"
+//
+//    for {
+//      network    ← NetworkLoader.loadMultiLayerNetwork(basePath)
+//      characters ← Xor.catchNonFatal(Source.fromFile(charactersFile).toList)
+//    } yield new StoryGenerator(network, characters)
 
   }
 

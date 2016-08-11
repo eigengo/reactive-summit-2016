@@ -18,11 +18,13 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import java.io.{File, FileInputStream, FileNotFoundException, InputStream}
+import java.io.{File, FileInputStream, InputStream}
 
-import cats.data.Xor
+import org.eigengo.rsa.deeplearning4j.NetworkLoader
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FlatSpec, Matchers}
+
+import scala.util.Success
 
 class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
 
@@ -42,16 +44,11 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
     }
   }
 
-  it should "properly report missing models" in {
-    val Xor.Left(ex) = SceneClassifier("/nothere")
-    ex should be (a[FileNotFoundException])
-  }
-
   it should "predict correct labels" in {
-    val Xor.Right(classifier) = SceneClassifier("/Users/janmachacek/Dropbox/Models/stuff")
+    val Success(classifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
 
     forAllScenes { (stream, label) ⇒
-      val Xor.Right(scene) = classifier.classify(stream)
+      val Success(scene) = classifier.classify(stream)
 
       scene.labels.length should be (1)
       val firstLabel = scene.labels.head

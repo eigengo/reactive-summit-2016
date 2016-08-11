@@ -20,15 +20,16 @@ package org.eigengo.rsa.deeplearning4j
 
 import java.io.FileNotFoundException
 
-import cats.data.Xor
-import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
+
+import scala.util.Failure
 
 class NetworkLoaderTest extends FlatSpec with PropertyChecks with Matchers {
   import NetworkLoader._
 
-  "NetworkLoader" should "report missing multilayer network files" in {
-    val Xor.Left(ex) = loadMultiLayerNetwork("/not-there")
+  it should "report missing multilayer network files" in {
+    val Failure(ex) = loadMultiLayerNetwork(_ ⇒ Failure(new FileNotFoundException("not there")))
     ex should be (a[FileNotFoundException])
   }
 

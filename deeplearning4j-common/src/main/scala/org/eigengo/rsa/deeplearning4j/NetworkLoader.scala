@@ -18,45 +18,70 @@
  */
 package org.eigengo.rsa.deeplearning4j
 
-import cats.data.Xor
+import java.io.InputStream
+
+import scala.util.{Failure, Success, Try}
 
 /**
   * Contains convenience functions to load DL4J networks using a common naming
   * schemes.
   */
 object NetworkLoader {
-  import scala.io.Source
+
+  type ResourceAccessor = String ⇒ Try[InputStream]
+  import java.io._
+
   import org.deeplearning4j.nn.conf.MultiLayerConfiguration
   import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
   import org.nd4j.linalg.api.ndarray.INDArray
   import org.nd4j.linalg.factory.Nd4j
-  import java.io._
+
+  import scala.io.Source
+
+  /**
+    * Function that can be used as the ResourceAccessor for classpath resources
+    * @param clazz the class to load the resources from
+    * @param prefix the prefix, e.g. "/models"; remember to start with "/"
+    * @param name the resource name
+    * @return the resource stream
+    */
+  def classpathResourceAccessor(clazz: Class[_], prefix: String = "/")(name: String): Try[InputStream] = {
+    val resourceName = prefix + name
+    val is = getClass.getResourceAsStream(resourceName)
+    if (is == null) {
+      Failure(new FileNotFoundException(resourceName))
+    } else {
+      Success(is)
+    }
+  }
 
   /**
     * Constructs the ``MultiLayerNetwork`` from two files
     * at the given ``basePath``. The three files are
     *
-    * - the network configuration in ``basePath.json``
-    * - the network parameters in ``basePath.bin``
+    * - the network configuration in resource named ``config``
+    * - the network parameters in resource named ``params``
     *
-    * @param basePath the base path
+    * @param resourceAccessor the accessor for the given resource
     * @return error or loaded & initialized ``MultiLayerNetwork``
     */
-  def loadMultiLayerNetwork(basePath: String): Throwable Xor MultiLayerNetwork = {
+  def loadMultiLayerNetwork(resourceAccessor: ResourceAccessor): Try[MultiLayerNetwork] = {
 
-    def loadNetworkConfiguration(configFile: String): Throwable Xor MultiLayerConfiguration = Xor.catchNonFatal {
-      if (!new File(configFile).exists()) Xor.left(new FileNotFoundException(configFile))
-      val configJson = Source.fromFile(configFile).mkString
-      MultiLayerConfiguration.fromJson(configJson)
-    }
+    def loadNetworkConfiguration(): Try[MultiLayerConfiguration] =
+      resourceAccessor("config").flatMap { config ⇒ Try {
+        val configJson = Source.fromInputStream(config).mkString
+        MultiLayerConfiguration.fromJson(configJson)
+      }
+      }
 
-    def loadParams(paramsFile: String): Throwable Xor INDArray = Xor.catchNonFatal {
-      if (!new File(paramsFile).exists()) Xor.left(new FileNotFoundException(paramsFile))
-      val is = new DataInputStream(new BufferedInputStream(new FileInputStream(paramsFile)))
-      val params = Nd4j.read(is)
-      is.close()
-      params
-    }
+    def loadParams(): Try[INDArray] =
+      resourceAccessor("params").flatMap { params ⇒ Try {
+        val is = new DataInputStream(new BufferedInputStream(params))
+        val result = Nd4j.read(is)
+        is.close()
+        result
+      }
+      }
 
     def initializeNetwork(configuration: MultiLayerConfiguration, params: INDArray): MultiLayerNetwork = {
       val network = new MultiLayerNetwork(configuration)
@@ -65,13 +90,28 @@ object NetworkLoader {
       network
     }
 
-    val configFile = s"$basePath.json"
-    val paramsFile = s"$basePath.bin"
-
     for {
-      configuration ← loadNetworkConfiguration(configFile)
-      params ← loadParams(paramsFile)
+      configuration ← loadNetworkConfiguration()
+      params ← loadParams()
     } yield initializeNetwork(configuration, params)
+
   }
+//
+//  /**
+//    * Constructs the ``MultiLayerNetwork`` from two files
+//    * at the given ``basePath``. The three files are
+//    *
+//    * - the network configuration in ``basePath.json``
+//    * - the network parameters in ``basePath.bin``
+//    *
+//    * @param basePath the base path
+//    * @return error or loaded & initialized ``MultiLayerNetwork``
+//    */
+//  def loadMultiLayerNetwork(basePath: String): Try[MultiLayerNetwork] = {
+//    loadMultiLayerNetwork {
+//        case "config" ⇒ Try(new FileInputStream(s"$basePath.json"))
+//        case "params" ⇒ Try(new FileInputStream(s"$basePath.bin"))
+//    }
+//  }
 
 }

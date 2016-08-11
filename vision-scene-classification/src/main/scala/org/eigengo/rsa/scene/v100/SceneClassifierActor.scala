@@ -18,23 +18,24 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import java.io.{ByteArrayInputStream, File}
+import java.io.ByteArrayInputStream
 
 import akka.actor.{Actor, Props}
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import cats.data.Xor
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.eigengo.rsa.Envelope
+import org.eigengo.rsa.deeplearning4j.NetworkLoader
+
+import scala.util.Success
 
 object SceneClassifierActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
-    val modelPath = new File(getClass.getResource("/models").getFile, "stuff").getAbsolutePath
-    val Xor.Right(sceneClassifier) = SceneClassifier(modelPath)
+    val Success(sceneClassifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
 
     val consumerConf = KafkaConsumer.Conf(
       config.getConfig("kafka.consumer-config"),
