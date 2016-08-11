@@ -30,9 +30,15 @@ import scala.concurrent.{Await, Future}
 object MainTest {
 
   def main(args: Array[String]): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+    val count = 500
 
-    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults().setAllowUnresolved(false))
+    Thread.sleep(30000)
+    println("".padTo(80, "*").mkString)
+    println(s"MainTest starting for $count...")
+    println("".padTo(80, "*").mkString)
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
 
     val producer = KafkaProducer(KafkaProducer.Conf(
       config.getConfig("tweet-image-producer"),
@@ -40,14 +46,21 @@ object MainTest {
       new FunSerializer[Envelope](_.toByteArray)
     ))
 
-    val futures: Seq[Future[RecordMetadata]] = (0 until 10000).map { _ ⇒
+    println(producer.partitionsFor("tweet-image"))
+
+    val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
       val payload = ByteString.copyFrom(Array[Byte](1, 2, 3))
-      producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
+      val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
+      print(".")
+      ret
     }
     val future = Future.sequence(futures)
 
     import scala.concurrent.duration._
+    println("Awaiting...")
     Await.result(future, 1.minute)
+    println("Done.")
+    println("".padTo(80, "*").mkString)
     producer.close()
   }
 
