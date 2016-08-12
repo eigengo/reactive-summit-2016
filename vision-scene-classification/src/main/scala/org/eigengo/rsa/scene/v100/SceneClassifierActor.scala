@@ -42,16 +42,6 @@ object SceneClassifierActor {
         NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
       )
     )
-
-    Props(classOf[SceneClassifierActor], config, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
-  }
-
-}
-
-class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) extends Actor {
-  import SceneClassifierActor._
-
-  private[this] val kafkaConsumerActor = {
     val consumerConf = KafkaConsumer.Conf(
       config.getConfig("kafka.consumer-config"),
       keyDeserializer = new StringDeserializer,
@@ -59,6 +49,15 @@ class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) ext
     )
     val consumerActorConf = KafkaConsumerActor.Conf(config.getConfig("kafka.consumer-actor-config"))
 
+    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
+  }
+
+}
+
+class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf, sceneClassifier: SceneClassifier) extends Actor {
+  import SceneClassifierActor._
+
+  private[this] val kafkaConsumerActor = {
     context.actorOf(
       KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
       "KafkaConsumer"
