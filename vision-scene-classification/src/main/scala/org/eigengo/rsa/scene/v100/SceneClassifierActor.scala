@@ -37,23 +37,27 @@ object SceneClassifierActor {
   def props(config: Config): Props = {
     val Success(sceneClassifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
 
+    Props(classOf[SceneClassifierActor], config, sceneClassifier)
+  }
+
+}
+
+class SceneClassifierActor(config: Config, sceneClassifier: SceneClassifier) extends Actor {
+  import SceneClassifierActor._
+
+  private[this] val kafkaConsumerActor = {
     val consumerConf = KafkaConsumer.Conf(
       config.getConfig("kafka.consumer-config"),
       keyDeserializer = new StringDeserializer,
       valueDeserializer = new FunDeserializer(Envelope.parseFrom)
     )
     val consumerActorConf = KafkaConsumerActor.Conf(config.getConfig("kafka.consumer-actor-config"))
-    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, sceneClassifier)
+
+    context.actorOf(
+      KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
+      "KafkaConsumer"
+    )
   }
-
-}
-
-class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[_, _], consumerActorConf: KafkaConsumerActor.Conf, sceneClassifier: SceneClassifier) extends Actor {
-  import SceneClassifierActor._
-  private[this] val kafkaConsumerActor = context.actorOf(
-    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
-    "KafkaConsumer"
-  )
 
   @scala.throws[Exception](classOf[Exception])
   override def preStart(): Unit = {
@@ -64,11 +68,11 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[_, _], consumerActor
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
         case (None, _) ⇒
-          println("###### Bantha poodoo!")
+          context.system.log.info("###### Bantha poodoo!")
         case (Some(handle), envelope) ⇒
-          println(s"###### Received ${envelope.payload.size()}")
-          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(x ⇒ println(s"###### $x"))
-          println(s"###### End")
+          context.system.log.info(s"###### Received ${envelope.payload.size()}")
+          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(x ⇒ context.system.log.info(s"###### $x"))
+          context.system.log.info(s"###### End")
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }

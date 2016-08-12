@@ -30,7 +30,7 @@ import scala.concurrent.{Await, Future}
 object MainTest {
 
   def main(args: Array[String]): Unit = {
-    val count = 500
+    val count = 100
 
     Thread.sleep(30000)
     println("".padTo(80, "*").mkString)
@@ -49,8 +49,6 @@ object MainTest {
     val is = getClass.getResourceAsStream("/beer.jpg")
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
-    println(producer.partitionsFor("tweet-image"))
-
     val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
       val payload = ByteString.copyFrom(bytes)
       val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
@@ -61,7 +59,7 @@ object MainTest {
 
     import scala.concurrent.duration._
     println("Awaiting...")
-    Await.result(future, 1.minute)
+    println(Await.result(future, 1.minute))
     println("Done.")
     println("".padTo(80, "*").mkString)
     producer.close()
