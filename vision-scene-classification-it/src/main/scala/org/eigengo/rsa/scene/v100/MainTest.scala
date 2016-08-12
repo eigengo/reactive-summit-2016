@@ -49,19 +49,25 @@ object MainTest {
     val is = getClass.getResourceAsStream("/beer.jpg")
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
-    val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
-      val payload = ByteString.copyFrom(bytes)
-      val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
-      print(".")
-      ret
-    }
-    val future = Future.sequence(futures)
+    while (true) {
+      println("".padTo(80, "*").mkString)
 
-    import scala.concurrent.duration._
-    println("Awaiting...")
-    println(Await.result(future, 1.minute))
-    println("Done.")
-    println("".padTo(80, "*").mkString)
+      val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
+        val payload = ByteString.copyFrom(bytes)
+        val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
+        print(".")
+        ret
+      }
+      val future = Future.sequence(futures)
+
+      import scala.concurrent.duration._
+      println("Awaiting...")
+      println(Await.result(future, 1.minute))
+      println("Done.")
+      println("".padTo(80, "*").mkString)
+
+      Thread.sleep(10000)
+    }
     producer.close()
   }
 

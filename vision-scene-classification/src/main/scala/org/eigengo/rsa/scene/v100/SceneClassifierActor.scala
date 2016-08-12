@@ -21,6 +21,7 @@ package org.eigengo.rsa.scene.v100
 import java.io.ByteArrayInputStream
 
 import akka.actor.{Actor, Props}
+import akka.routing.RandomPool
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -37,7 +38,7 @@ object SceneClassifierActor {
   def props(config: Config): Props = {
     val Success(sceneClassifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
 
-    Props(classOf[SceneClassifierActor], config, sceneClassifier)
+    Props(classOf[SceneClassifierActor], config, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }
