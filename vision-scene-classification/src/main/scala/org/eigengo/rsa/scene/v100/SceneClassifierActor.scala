@@ -64,10 +64,11 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[_, _], consumerActor
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
         case (None, _) ⇒
-          println("Bantha poodoo!")
+          println("###### Bantha poodoo!")
         case (Some(handle), envelope) ⇒
-          println(s"Received ${envelope.payload.size()}")
-          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(println)
+          println(s"###### Received ${envelope.payload.size()}")
+          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(x ⇒ println(s"###### $x"))
+          println(s"###### End")
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }

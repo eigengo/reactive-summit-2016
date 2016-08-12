@@ -29,6 +29,7 @@ object Dependencies {
   }
 
   object nd4j {
+
     private val version = "0.4-rc3.10"
     private lazy val osArchClassifier = {
       val rawOsName = System.getProperty("os.name").toLowerCase
@@ -47,7 +48,7 @@ object Dependencies {
 
     // Even though ``native`` includes all native backends, SBT must be explicitly told
     // the classifier in order to pull in the native shared object
-    val native  = "org.nd4j" % "nd4j-native" % version classifier "" classifier osArchClassifier
+    def native(arch: String = osArchClassifier)  = "org.nd4j" % "nd4j-native" % version classifier "" classifier arch
   }
 
   val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
