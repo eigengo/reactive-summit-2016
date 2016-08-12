@@ -45,7 +45,12 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
   }
 
   it should "predict correct labels" in {
-    val Success(classifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
+    val Success(classifier) = SceneClassifier(
+      NetworkLoader.fallbackResourceAccessor(
+        NetworkLoader.filesystemResourceAccessor("/opt/models/scene"),
+        NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
+      )
+    )
 
     forAllScenes { (stream, label) ⇒
       val Success(scene) = classifier.classify(stream)

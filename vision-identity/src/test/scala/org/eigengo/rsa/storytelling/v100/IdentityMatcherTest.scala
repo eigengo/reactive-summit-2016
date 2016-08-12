@@ -18,19 +18,22 @@
  */
 package org.eigengo.rsa.storytelling.v100
 
-import cats.data.Xor
-import org.scalatest.{FlatSpec, Matchers}
+import org.eigengo.rsa.deeplearning4j.NetworkLoader
 import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
 
-class StoryGeneratorTest extends FlatSpec with PropertyChecks with Matchers {
+import scala.util.Success
 
-  "Story generator" should "generate plausible text" in {
-    val Xor.Right(generator) = StoryGenerator("/Users/janmachacek/Dropbox/Models/shakespeare")
-    val response = generator.generate("beer cake", 300)
+class IdentityMatcherTest extends FlatSpec with PropertyChecks with Matchers {
 
-    println(response)
-
-    fail("Finish me")
+  it should "should match people" in {
+    // Expected to fail
+    val Success(identityMatcher) = IdentityMatcher(
+      NetworkLoader.fallbackResourceAccessor(
+        NetworkLoader.filesystemResourceAccessor("/opt/models/identity"),
+        NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/identity")
+      )
+    )
   }
 
 }
