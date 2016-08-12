@@ -39,6 +39,29 @@ object NetworkLoader {
   import scala.io.Source
 
   /**
+    * Function that can be used as the ResourceAccessor to delegate amongst many resourceAccessors,
+    * where it is expected that one of them might succeed
+    *
+    * @param resourceAccessor the first resource accessor
+    * @param resourceAccessors the remaining resource accessors
+    * @param name the resource name
+    * @return the resource stream
+    */
+  def fallbackResourceAccessor(resourceAccessor: ResourceAccessor, resourceAccessors: ResourceAccessor*)(name: String): Try[InputStream] = {
+    resourceAccessors.foldLeft(resourceAccessor(name))((result, ra) ⇒ result.orElse(ra(name)))
+  }
+
+  /**
+    * Function that can be used as the ResourceAccessor for filesystem resources
+    * @param prefix the prefix, e.g. "/opt/models/scene"; most likely a good idea to start with "/"
+    * @param name the resource name
+    * @return the resource stream
+    */
+  def filesystemResourceAccessor(prefix: String)(name: String): Try[InputStream] = {
+    Try(new FileInputStream(new File(prefix, name)))
+  }
+
+  /**
     * Function that can be used as the ResourceAccessor for classpath resources
     * @param clazz the class to load the resources from
     * @param prefix the prefix, e.g. "/models"; remember to start with "/"

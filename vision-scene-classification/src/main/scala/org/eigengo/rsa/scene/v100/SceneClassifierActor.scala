@@ -36,7 +36,12 @@ object SceneClassifierActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
-    val Success(sceneClassifier) = SceneClassifier(NetworkLoader.classpathResourceAccessor(getClass, "/models/scene/"))
+    val Success(sceneClassifier) = SceneClassifier(
+      NetworkLoader.fallbackResourceAccessor(
+        NetworkLoader.filesystemResourceAccessor("/opt/models/scene"),
+        NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
+      )
+    )
 
     Props(classOf[SceneClassifierActor], config, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
   }
