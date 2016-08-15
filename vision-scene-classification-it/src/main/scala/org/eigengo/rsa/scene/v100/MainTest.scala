@@ -18,7 +18,7 @@
  */
 package org.eigengo.rsa.scene.v100
 
-import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord}
+import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord, KafkaSerializer}
 import com.google.protobuf.ByteString
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 import org.apache.kafka.clients.producer.RecordMetadata
@@ -43,7 +43,7 @@ object MainTest {
     val producer = KafkaProducer(KafkaProducer.Conf(
       config.getConfig("tweet-image-producer"),
       new StringSerializer,
-      new FunSerializer[Envelope](_.toByteArray)
+      KafkaSerializer[Envelope](_.toByteArray)
     ))
 
     val is = getClass.getResourceAsStream("/beer.jpg")

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.eigengo.rsa.storytelling.v100
+package org.eigengo.rsa.identity.v100
 
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 import org.scalatest.prop.PropertyChecks

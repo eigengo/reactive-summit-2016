@@ -16,22 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.eigengo.rsa.scene.v100
+package org.eigengo.rsa.identity.v100
 
-import java.util
+import akka.actor.ActorSystem
+import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
-import org.apache.kafka.common.serialization.Serializer
+object Main {
 
-/**
-  * Wraps ``fun`` into ``Serializer[A]``, which can be used in the Kafka producer
-  *
-  * @param fun the (pure) function to be turned in to a Serializer
-  */
-class FunSerializer[A](fun: A ⇒ Array[Byte]) extends Serializer[A] {
+  def main(args: Array[String]): Unit = {
+    Thread.sleep(30000)
+    println("".padTo(80, "*").mkString)
+    println(s"Identity 100 starting...")
+    println("".padTo(80, "*").mkString)
 
-  override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = { }
+    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val system = ActorSystem(name = "identity-100", config = config)
+    system.actorOf(IdentityMatcherActor.props(config.getConfig("app")))
+  }
 
-  override def serialize(topic: String, data: A): Array[Byte] = fun(data)
-
-  override def close(): Unit = { }
 }

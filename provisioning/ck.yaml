@@ -27,3 +27,12 @@ services:
       KAFKA_CREATE_TOPICS: "tweet-image:30:1"
     links:
       - zookeeper
+
+  cassandra:
+    extends:
+      file: all.template
+      service: cassandra
+    ports:
+      - "9042:9042"
+    expose:
+      - "9042"

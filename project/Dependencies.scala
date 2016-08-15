@@ -20,11 +20,15 @@ object Dependencies {
   }
 
   object akka {
-    val actor = "com.typesafe.akka" %% "akka-actor" % "2.4.7"
+    private val version = "2.4.7"
+
+    val actor = "com.typesafe.akka" %% "akka-actor" % version
+    val persistence = "com.typesafe.akka" %% "akka-persistence" % version
+    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6"
 
     object http {
-      val core = "com.typesafe.akka" %% "akka-http-core" % "2.4.7"
-      val experimental = "com.typesafe.akka" %% "akka-http-experimental" % "2.4.7"
+      val core = "com.typesafe.akka" %% "akka-http-core" % version
+      val experimental = "com.typesafe.akka" %% "akka-http-experimental" % version
     }
   }
 

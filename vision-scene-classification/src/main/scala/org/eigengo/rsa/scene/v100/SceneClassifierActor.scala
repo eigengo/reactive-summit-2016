@@ -20,11 +20,12 @@ package org.eigengo.rsa.scene.v100
 
 import java.io.ByteArrayInputStream
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RandomPool
-import cakesolutions.kafka.{KafkaConsumer, KafkaDeserializer}
-import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe}
+import cakesolutions.kafka.{KafkaConsumer, KafkaDeserializer, KafkaProducer, KafkaProducerRecord}
+import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
+import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.eigengo.rsa.Envelope
@@ -54,31 +55,50 @@ object SceneClassifierActor {
 
 }
 
-class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf, sceneClassifier: SceneClassifier) extends Actor {
+class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf,
+                           producerConf: KafkaProducer.Conf[String, Envelope],
+                           sceneClassifier: SceneClassifier) extends Actor {
   import SceneClassifierActor._
 
-  private[this] val kafkaConsumerActor = {
-    context.actorOf(
+  private[this] val kafkaConsumerActor = context.actorOf(
       KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
       "KafkaConsumer"
     )
+  private[this] val producer = KafkaProducer(conf = producerConf)
+
+  import scala.concurrent.duration._
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10.seconds) {
+    case _ ⇒ SupervisorStrategy.Restart
   }
 
-  @scala.throws[Exception](classOf[Exception])
+  @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
     kafkaConsumerActor ! Subscribe.AutoPartition(Seq("tweet-image"))
+  }
+
+  @scala.throws(classOf[Exception])
+  override def postStop(): Unit = {
+    kafkaConsumerActor ! Unsubscribe
   }
 
   override def receive: Receive = {
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
         case (None, _) ⇒
-          context.system.log.info("###### Bantha poodoo!")
         case (Some(handle), envelope) ⇒
-          context.system.log.info(s"###### Received ${envelope.payload.size()}")
-          sceneClassifier.classify(new ByteArrayInputStream(envelope.payload.toByteArray)).foreach(x ⇒ context.system.log.info(s"###### $x"))
-          context.system.log.info(s"###### End")
-          kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+          val is = new ByteArrayInputStream(envelope.payload.toByteArray)
+          sceneClassifier.classify(is).foreach { scene ⇒
+            val out = Envelope(version = 100,
+              timestamp = System.nanoTime(),
+              correlationId = envelope.correlationId,
+              headers = Map(),
+              payload = ByteString.copyFrom(scene.toByteArray))
+
+            import context.dispatcher
+            producer
+              .send(KafkaProducerRecord(handle, out))
+              .onComplete(_ ⇒ kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true))
+          }
       }
   }
 

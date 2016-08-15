@@ -16,13 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.eigengo.rsa.storytelling.v100
+package org.eigengo.rsa.identity.v100
 
 import java.io.InputStream
 
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
-import org.eigengo.rsa.identity.v100.Identity
 
 import scala.io.Source
 import scala.util.{Failure, Try}

@@ -56,6 +56,8 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   .settings(deeplearning4jSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.akka.persistence,
+    libraryDependencies += Dependencies.akka.persistenceCassandra,
     libraryDependencies += Dependencies.scalapb.json4s,
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
@@ -124,6 +126,7 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
   resolvers += "Maven central" at "http://repo1.maven.org/maven2/",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
+  resolvers += Resolver.bintrayRepo("krasserm", "maven"),
   autoCompilerPlugins := true
 )
 
@@ -147,7 +150,7 @@ lazy val dockerSettings = Seq(
   dockerBaseImage := "cakesolutions/alpine-dcos-base:latest",
   dockerUpdateLatest := true,
   dockerRepository := Some("eigengo"),
-  packageName in Docker := s"rsa16-${name.value}",
+  packageName in Docker := s"rsa-${name.value}",
   maintainer in Docker := "Eigengo <state@eigengo.org>",
   version in Docker := sys.props.getOrElse("tag", default = version.value),
   daemonUser in Docker := "root"
