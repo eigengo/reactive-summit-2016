@@ -56,7 +56,8 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   .settings(deeplearning4jSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
-    libraryDependencies += Dependencies.scalapb.json4s
+    libraryDependencies += Dependencies.scalapb.json4s,
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
 lazy val `vision-scene-classification` = project.in(file("vision-scene-classification"))

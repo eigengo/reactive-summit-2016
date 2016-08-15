@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package org.eigengo.rsa.translate.v100;
+
+message Translate {
+    string text = 1;
+    string sourceLocale = 2;
+    string targetLocale = 3;
+}
+
+message Translated {
+    string text = 1;
+}
