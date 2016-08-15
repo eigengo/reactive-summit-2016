@@ -22,12 +22,12 @@ import java.io.ByteArrayInputStream
 
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RandomPool
-import cakesolutions.kafka.{KafkaConsumer, KafkaDeserializer, KafkaProducer, KafkaProducerRecord}
+import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
@@ -49,8 +49,13 @@ object SceneClassifierActor {
       valueDeserializer = KafkaDeserializer(Envelope.parseFrom)
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
+    val producerConf = KafkaProducer.Conf(
+      config.getConfig("kafka.scene-producer"),
+      new StringSerializer,
+      KafkaSerializer[Envelope](_.toByteArray)
+    )
 
-    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, producerConf, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }

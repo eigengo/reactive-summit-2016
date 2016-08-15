@@ -25,10 +25,10 @@ import akka.persistence.PersistentActor
 import akka.routing.RandomPool
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import cakesolutions.kafka.{KafkaConsumer, KafkaDeserializer, KafkaProducer, KafkaProducerRecord}
+import cakesolutions.kafka._
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
@@ -66,8 +66,13 @@ object IdentityMatcherActor {
       valueDeserializer = KafkaDeserializer(Envelope.parseFrom)
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
+    val producerConf = KafkaProducer.Conf(
+      config.getConfig("kafka.identity-producer"),
+      new StringSerializer,
+      KafkaSerializer[Envelope](_.toByteArray)
+    )
 
-    Props(classOf[IdentityMatcherActor], consumerConf, consumerActorConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[IdentityMatcherActor], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }
