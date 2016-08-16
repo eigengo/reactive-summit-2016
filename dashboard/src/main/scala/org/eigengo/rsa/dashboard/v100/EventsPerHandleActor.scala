@@ -32,7 +32,7 @@ class EventsPerHandleActor(handle: String) extends Actor {
   override def preStart(): Unit = {
     import scala.concurrent.duration._
 
-    context.system.eventStream.subscribe(self, classOf[GeneratedMessage])
+    context.system.eventStream.subscribe(self, classOf[(String, GeneratedMessage)])
     context.setReceiveTimeout(120.seconds)
   }
 
