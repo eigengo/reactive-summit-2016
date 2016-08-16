@@ -56,7 +56,7 @@ object IdentityMatcherActor {
 
     val Success(identityMatcher) = IdentityMatcher(
       NetworkLoader.fallbackResourceAccessor(
-        NetworkLoader.filesystemResourceAccessor("/opt/models/scene"),
+        NetworkLoader.filesystemResourceAccessor("/opt/models/identity"),
         NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
       )
     )
