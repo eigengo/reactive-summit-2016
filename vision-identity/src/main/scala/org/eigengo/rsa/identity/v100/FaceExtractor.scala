@@ -32,8 +32,6 @@ class FaceExtractor(acceptor: FaceExtractor.FaceImage ⇒ Boolean) {
   import FaceExtractor._
 
   def extract(imageStream: InputStream): Try[List[FaceImage]] = Success(List(
-    FaceImage(1.0, 0, 0, 100, 100, Array.empty),
-    FaceImage(1.0, 0, 0, 100, 100, Array.empty),
     FaceImage(1.0, 0, 0, 100, 100, Array.empty)
   ))
 
