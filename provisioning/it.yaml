@@ -33,10 +33,10 @@ services:
     links:
       - zookeeper
 
-  vision-scene-classification-it:
+  it:
     extends:
       file: all.template
-      service: vision-scene-classification-it
+      service: it
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
     links:
@@ -51,4 +51,22 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
     links:
       - kafka
+
+  vision-identity:
+    extends:
+      file: all.template
+      service: vision-identity
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    links:
+      - kafka
       - cassandra
+
+  dashboard:
+    extends:
+      file: all.template
+      service: dashboard
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+    links:
+      - kafka

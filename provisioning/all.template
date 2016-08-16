@@ -10,8 +10,14 @@ services:
   kafka:
     image: wurstmeister/kafka
 
-  vision-scene-classification-it:
-    image: eigengo/rsa-vision-scene-classification-it:local
+  it:
+    image: eigengo/rsa-it:latest
+
+  dashboard:
+    image: eigengo/rsa-dashboard:latest
+
+  vision-identity:
+    image: eigengo/rsa-vision-identity:latest
 
   vision-scene-classification:
-    image: eigengo/rsa-vision-scene-classification:local
+    image: eigengo/rsa-vision-scene-classification:latest
