@@ -1,4 +1,4 @@
-mainClass in Compile := Some("org.eigengo.rsa.scene.v100.MainTest")
+mainClass in Compile := Some("org.eigengo.rsa.it.v100.Main")
 
 mappings in Universal <++= (packageBin in Compile, sourceDirectory) map { (_, src) =>
   packageMapping(

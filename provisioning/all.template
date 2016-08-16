@@ -2,7 +2,7 @@ version: '2'
 
 services:
   cassandra:
-    image: cassandra:2.1
+    image: cassandra:3
 
   zookeeper:
     image: wurstmeister/zookeeper

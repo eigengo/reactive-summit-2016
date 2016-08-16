@@ -24,7 +24,7 @@ services:
       KAFKA_ADVERTISED_PORT: 9092
       # 30 partitions, one replica; documentation is at
       # https://github.com/wurstmeister/kafka-docker#automatically-create-topics
-      KAFKA_CREATE_TOPICS: "tweet-image:30:1"
+      KAFKA_CREATE_TOPICS: "tweet-image:30:1,scene:30:1,identity:30:1"
     links:
       - zookeeper
 

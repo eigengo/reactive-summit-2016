@@ -30,7 +30,7 @@ import scala.concurrent.{Await, Future}
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val count = 100
+    val count = 1
 
     Thread.sleep(30000)
     println("".padTo(80, "*").mkString)

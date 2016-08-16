@@ -116,6 +116,8 @@ lazy val ingest = project.in(file("ingest"))
   ))
 
 lazy val root = project.in(file("."))
+  .settings(commonSettings)
+  .settings(deeplearning4jSettings)
   .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it)
   .aggregate(`vision-identity`, `vision-scene-classification`, dashboard, it)
 
