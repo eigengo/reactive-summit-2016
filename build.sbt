@@ -21,17 +21,23 @@ lazy val `linter-plugin` = project.in(file("linter-plugin"))
     libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
   ))
 
-lazy val analytics = project.in(file("analytics"))
-  .settings(commonSettings)
-  .settings(dockerSettings)
-  .settings(serverSettings)
-  .settings(protobufSettings(Seq(protocol)))
+lazy val dashboard = project.in(file("dashboard"))
+  .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(`protobuf-testkit` % Test)
+  .dependsOn(`linter-plugin` % Compile)
 
-lazy val `analytics-ui` = project.in(file("analytics-ui"))
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
+  .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+    libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.akka.http.core,
+    libraryDependencies += Dependencies.akka.http.experimental,
+    libraryDependencies += Dependencies.scalapb.json4s,
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
+  ))
 
 lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
   .settings(commonSettings)
@@ -81,7 +87,7 @@ lazy val `vision-scene-classification` = project.in(file("vision-scene-classific
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
-lazy val `vision-scene-classification-it` = project.in(file("vision-scene-classification-it"))
+lazy val it = project.in(file("it"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
 
@@ -108,6 +114,10 @@ lazy val ingest = project.in(file("ingest"))
     libraryDependencies += Dependencies.akka.http.experimental,
     libraryDependencies += Dependencies.scalapb.json4s
   ))
+
+lazy val root = project.in(file("."))
+  .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it)
+  .aggregate(`vision-identity`, `vision-scene-classification`, dashboard, it)
 
 // addCompilerPlugin("org.eigengo" %% "linterplugin" % "1.0-SNAPSHOT")
 

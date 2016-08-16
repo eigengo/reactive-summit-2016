@@ -112,7 +112,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         val out = Envelope(version = 100,
           timestamp = System.nanoTime(),
           correlationId = correlationId,
-          headers = Map(),
+          messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
         producer.send(KafkaProducerRecord(handle, out))
       }
@@ -134,7 +134,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         val response = Envelope(version = 100,
           timestamp = System.nanoTime(),
           correlationId = correlationId,
-          headers = Map(),
+          messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
         producer.send(KafkaProducerRecord(handle, response))
       }

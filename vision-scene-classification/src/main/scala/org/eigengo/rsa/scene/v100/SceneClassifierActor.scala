@@ -96,7 +96,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
             val out = Envelope(version = 100,
               timestamp = System.nanoTime(),
               correlationId = envelope.correlationId,
-              headers = Map(),
+              messageType = "scene",
               payload = ByteString.copyFrom(scene.toByteArray))
 
             import context.dispatcher

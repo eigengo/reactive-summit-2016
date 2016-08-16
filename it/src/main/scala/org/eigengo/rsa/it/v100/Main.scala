@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.eigengo.rsa.scene.v100
+package org.eigengo.rsa.it.v100
 
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord, KafkaSerializer}
 import com.google.protobuf.ByteString
@@ -27,14 +27,14 @@ import org.eigengo.rsa.Envelope
 
 import scala.concurrent.{Await, Future}
 
-object MainTest {
+object Main {
 
   def main(args: Array[String]): Unit = {
     val count = 100
 
     Thread.sleep(30000)
     println("".padTo(80, "*").mkString)
-    println(s"MainTest starting for $count...")
+    println(s"it 100 starting for $count...")
     println("".padTo(80, "*").mkString)
 
     import scala.concurrent.ExecutionContext.Implicits.global
