@@ -58,6 +58,8 @@ services:
       service: vision-identity
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      CASSANDRA_JOURNAL_CPS: "cassandra"
+      CASSANDRA_SNAPSHOT_CPS: "cassandra"
     links:
       - kafka
       - cassandra
