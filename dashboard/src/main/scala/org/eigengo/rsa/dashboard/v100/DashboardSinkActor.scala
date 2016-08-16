@@ -21,7 +21,7 @@ package org.eigengo.rsa.dashboard.v100
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RandomPool
 import cakesolutions.kafka._
-import cakesolutions.kafka.akka.KafkaConsumerActor.{Subscribe, Unsubscribe}
+import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
 import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.Config
@@ -77,6 +77,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
             context.system.eventStream.publish((handle, message))
             // TODO: Save to Cassandra
           }
+          kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }
 
