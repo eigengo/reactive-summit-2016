@@ -114,7 +114,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           correlationId = correlationId,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
-        producer.send(KafkaProducerRecord(handle, out))
+        producer.send(KafkaProducerRecord("identity", handle, out))
       }
   }
 
@@ -136,7 +136,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           correlationId = correlationId,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
-        producer.send(KafkaProducerRecord(handle, response))
+        producer.send(KafkaProducerRecord("identity", handle, response))
       }
   }
 
