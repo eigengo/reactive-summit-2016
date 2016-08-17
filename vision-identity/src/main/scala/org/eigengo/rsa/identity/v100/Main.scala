@@ -24,7 +24,7 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 object Main {
 
   def main(args: Array[String]): Unit = {
-    Thread.sleep(30000)
+    Thread.sleep(80000)
     println("".padTo(80, "*").mkString)
     println(s"Identity 100 starting...")
     println("".padTo(80, "*").mkString)

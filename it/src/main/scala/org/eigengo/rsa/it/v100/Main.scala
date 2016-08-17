@@ -32,7 +32,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     val count = 1
 
-    Thread.sleep(30000)
+    Thread.sleep(80000)
     println("".padTo(80, "*").mkString)
     println(s"it 100 starting for $count...")
     println("".padTo(80, "*").mkString)

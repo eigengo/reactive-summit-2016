@@ -26,7 +26,7 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 object Main extends DashboardService {
 
   def main(args: Array[String]): Unit = {
-    Thread.sleep(30000)
+    Thread.sleep(80000)
     println("".padTo(80, "*").mkString)
     println(s"Dashboard 100 starting...")
     println("".padTo(80, "*").mkString)
@@ -37,7 +37,7 @@ object Main extends DashboardService {
     import system.dispatcher
 
     system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
-    Http(system).bindAndHandle(dashboardRoute, "localhost", 8080)
+    Http(system).bindAndHandle(dashboardRoute, "0.0.0.0", 8080)
   }
 
 }
