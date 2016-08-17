@@ -115,13 +115,10 @@ lazy val ingest = project.in(file("ingest"))
     libraryDependencies += Dependencies.scalapb.json4s
   ))
 
-lazy val root = project.in(file("."))
+lazy val `fat-it` = project.in(file("fat-it"))
   .settings(commonSettings)
   .settings(deeplearning4jSettings)
   .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it)
-  .aggregate(`vision-identity`, `vision-scene-classification`, dashboard, it)
-
-// addCompilerPlugin("org.eigengo" %% "linterplugin" % "1.0-SNAPSHOT")
 
 lazy val deeplearning4jSettings = Seq(
   classpathTypes += "maven-plugin",

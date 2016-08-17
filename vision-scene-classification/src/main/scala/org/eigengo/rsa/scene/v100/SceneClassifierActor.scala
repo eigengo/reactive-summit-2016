@@ -94,7 +94,8 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           sceneClassifier.classify(is).foreach { scene ⇒
             val out = Envelope(version = 100,
-              timestamp = System.nanoTime(),
+              processingTimestamp = System.nanoTime(),
+              ingestionTimestamp = envelope.ingestionTimestamp,
               correlationId = envelope.correlationId,
               messageType = "scene",
               payload = ByteString.copyFrom(scene.toByteArray))

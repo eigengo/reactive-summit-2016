@@ -18,14 +18,15 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
-import akka.actor.{Actor, Props, ReceiveTimeout}
+import akka.actor.{Props, ReceiveTimeout}
+import akka.stream.actor.ActorPublisher
 import com.trueaccord.scalapb.GeneratedMessage
 
 object EventsPerHandleActor {
   def props(handle: String): Props = Props(classOf[EventsPerHandleActor], handle)
 }
 
-class EventsPerHandleActor(handle: String) extends Actor {
+class EventsPerHandleActor(handle: String) extends ActorPublisher[String] {
   private var messages: List[GeneratedMessage] = Nil
 
   @scala.throws(classOf[Exception])
@@ -44,10 +45,9 @@ class EventsPerHandleActor(handle: String) extends Actor {
   override def receive: Receive = {
     case (`handle`, message: GeneratedMessage) ⇒
       messages = message :: messages
-      println(s"##### Received message for $handle. Latest 10 are ${messages.take(10)}.")
+      onNext(messages.toString())
     case ReceiveTimeout ⇒
-      println(s"##### No more messages for $handle. Bye-bye.")
-      context.stop(self)
+      onCompleteThenStop()
   }
 
 }

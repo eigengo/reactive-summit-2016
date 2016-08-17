@@ -38,7 +38,7 @@ object IdentityMatcherActor {
 
   import FaceExtractor._
 
-  private case class IdentifyFace(correlationId: String, handle: String, faceRGBBitmap: Array[Byte])
+  private case class IdentifyFace(ingestionTimestamp: Long, correlationId: String, handle: String, faceRGBBitmap: Array[Byte])
 
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
@@ -107,10 +107,11 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   override def receiveRecover: Receive = {
-    case IdentifyFace(correlationId, handle, faceRGBBitmap) ⇒
+    case IdentifyFace(ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
       identityMatcher.identify(new ByteArrayInputStream(faceRGBBitmap)).foreach { identity ⇒
         val out = Envelope(version = 100,
-          timestamp = System.nanoTime(),
+          processingTimestamp = System.nanoTime(),
+          ingestionTimestamp = ingestionTimestamp,
           correlationId = correlationId,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
@@ -125,14 +126,15 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           faceExtractor.extract(is).foreach { result ⇒
-            persistAll(result)(fi ⇒ self ! IdentifyFace(envelope.correlationId, handle, fi.rgbBitmap))
+            persistAll(result)(fi ⇒ self ! IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap))
           }
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
-    case IdentifyFace(correlationId, handle, faceRGBBitmap) ⇒
+    case IdentifyFace(ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
       identityMatcher.identify(new ByteArrayInputStream(faceRGBBitmap)).foreach { identity ⇒
         val response = Envelope(version = 100,
-          timestamp = System.nanoTime(),
+          processingTimestamp = System.nanoTime(),
+          ingestionTimestamp = ingestionTimestamp,
           correlationId = correlationId,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))

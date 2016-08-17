@@ -19,9 +19,11 @@
 package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
-object Main {
+object Main extends DashboardService {
 
   def main(args: Array[String]): Unit = {
     Thread.sleep(30000)
@@ -30,9 +32,12 @@ object Main {
     println("".padTo(80, "*").mkString)
 
     val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
-    val system = ActorSystem(name = "dashboard-100", config = config)
+    implicit val system = ActorSystem(name = "dashboard-100", config = config)
+    implicit val materializer = ActorMaterializer()
+    import system.dispatcher
+
     system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
-    system.actorOf(EventsPerHandleActor.props("@honzam399"))
+    Http(system).bindAndHandle(dashboardRoute, "localhost", 8080)
   }
 
 }

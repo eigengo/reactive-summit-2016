@@ -1,13 +1,12 @@
 syntax = "proto3";
 
-//import "google/protobuf/any.proto";
-
 package org.eigengo.rsa;
 
 message Envelope {
     int32 version = 1;
-    int64 timestamp = 2;
-    string correlationId = 3;
-    string messageType = 4;
-    bytes payload = 5;
+    int64 processingTimestamp = 2;
+    int64 ingestionTimestamp = 3;
+    string correlationId = 4;
+    string messageType = 5;
+    bytes payload = 6;
 }
