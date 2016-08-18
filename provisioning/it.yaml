@@ -1,13 +1,6 @@
 version: '2'
 
 services:
-  cassandra:
-    extends:
-      file: all.template
-      service: cassandra
-    expose:
-      - "9042"
-
   zookeeper:
     extends:
       file: all.template
@@ -33,12 +26,22 @@ services:
     links:
       - zookeeper
 
+  cassandra:
+    extends:
+      file: all.template
+      service: cassandra
+    links:
+      - kafka
+    expose:
+      - "9042"
+
   it:
     extends:
       file: all.template
       service: it
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      START_DELAY: "120000"
     links:
       - kafka
       - cassandra
@@ -49,20 +52,22 @@ services:
       service: vision-scene-classification
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      START_DELAY: "120000"
     links:
       - kafka
 
-  vision-identity:
-    extends:
-      file: all.template
-      service: vision-identity
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
-      CASSANDRA_JOURNAL_CPS: "cassandra"
-      CASSANDRA_SNAPSHOT_CPS: "cassandra"
-    links:
-      - kafka
-      - cassandra
+#  vision-identity:
+#    extends:
+#      file: all.template
+#      service: vision-identity
+#    environment:
+#      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+#      CASSANDRA_JOURNAL_CPS: "cassandra"
+#      CASSANDRA_SNAPSHOT_CPS: "cassandra"
+#      START_DELAY: "120000"
+#    links:
+#      - kafka
+#      - cassandra
 
   dashboard:
     extends:
@@ -72,5 +77,6 @@ services:
       - "8080:8080"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+      START_DELAY: "120000"
     links:
       - kafka

@@ -72,6 +72,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
         case (None, _) ⇒
+          context.system.log.error("Received (None, _) from Kafka.")
         case (Some(handle), envelope) ⇒
           messageFromEnvelope(envelope).foreach { message ⇒
             context.system.eventStream.publish((handle, message))

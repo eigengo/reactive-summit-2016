@@ -24,14 +24,14 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 object Main {
 
   def main(args: Array[String]): Unit = {
-    Thread.sleep(80000)
-    println("".padTo(80, "*").mkString)
-    println(s"Scene 100 starting...")
-    println("".padTo(80, "*").mkString)
+    Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
-    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val config = ConfigFactory.load("vision-scene.conf").resolve(ConfigResolveOptions.defaults())
     val system = ActorSystem(name = "scene-classification-100", config = config)
+    system.log.info("Scene 100 starting...")
+
     system.actorOf(SceneClassifierActor.props(config.getConfig("app")))
+    system.log.info("Scene 100 running.")
   }
 
 }

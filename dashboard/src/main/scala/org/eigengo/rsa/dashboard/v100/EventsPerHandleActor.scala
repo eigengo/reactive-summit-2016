@@ -44,7 +44,7 @@ class EventsPerHandleActor(handle: String) extends ActorPublisher[String] {
 
   override def receive: Receive = {
     case (`handle`, message: GeneratedMessage) ⇒
-      messages = message :: messages
+      messages = (message :: messages).take(10)
       onNext(messages.toString())
     case ReceiveTimeout ⇒
       onCompleteThenStop()

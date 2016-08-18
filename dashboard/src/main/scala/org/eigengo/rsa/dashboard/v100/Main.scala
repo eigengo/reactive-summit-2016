@@ -26,18 +26,17 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 object Main extends DashboardService {
 
   def main(args: Array[String]): Unit = {
-    Thread.sleep(80000)
-    println("".padTo(80, "*").mkString)
-    println(s"Dashboard 100 starting...")
-    println("".padTo(80, "*").mkString)
+    Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
-    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val config = ConfigFactory.load("dashboard.conf").resolve(ConfigResolveOptions.defaults())
     implicit val system = ActorSystem(name = "dashboard-100", config = config)
     implicit val materializer = ActorMaterializer()
     import system.dispatcher
 
+    system.log.info(s"Dashboard 100 starting...")
     system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
     Http(system).bindAndHandle(dashboardRoute, "0.0.0.0", 8080)
+    system.log.info(s"Dashboard 100 running.")
   }
 
 }

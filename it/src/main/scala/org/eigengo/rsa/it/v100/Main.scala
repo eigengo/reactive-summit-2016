@@ -24,21 +24,20 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.kafka.common.serialization.StringSerializer
 import org.eigengo.rsa.Envelope
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, Future}
 
 object Main {
+  private val logger = LoggerFactory.getLogger(Main.getClass)
 
   def main(args: Array[String]): Unit = {
-    val count = 1
+    val count = 100
 
-    Thread.sleep(80000)
-    println("".padTo(80, "*").mkString)
-    println(s"it 100 starting for $count...")
-    println("".padTo(80, "*").mkString)
+    Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
     import scala.concurrent.ExecutionContext.Implicits.global
-    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val config = ConfigFactory.load("it.conf").resolve(ConfigResolveOptions.defaults())
 
     val producer = KafkaProducer(KafkaProducer.Conf(
       config.getConfig("tweet-image-producer"),
@@ -50,8 +49,6 @@ object Main {
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
     while (true) {
-      println("".padTo(80, "*").mkString)
-
       val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
         val payload = ByteString.copyFrom(bytes)
         val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
@@ -61,10 +58,7 @@ object Main {
       val future = Future.sequence(futures)
 
       import scala.concurrent.duration._
-      println("Awaiting...")
-      println(Await.result(future, 1.minute))
-      println("Done.")
-      println("".padTo(80, "*").mkString)
+      logger.info(Await.result(future, 1.minute).toString())
 
       Thread.sleep(10000)
     }

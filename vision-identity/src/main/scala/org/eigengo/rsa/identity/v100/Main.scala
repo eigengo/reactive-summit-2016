@@ -24,14 +24,14 @@ import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 object Main {
 
   def main(args: Array[String]): Unit = {
-    Thread.sleep(80000)
-    println("".padTo(80, "*").mkString)
-    println(s"Identity 100 starting...")
-    println("".padTo(80, "*").mkString)
+    Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
-    val config = ConfigFactory.load("application.conf").resolve(ConfigResolveOptions.defaults())
+    val config = ConfigFactory.load("vision-identity.conf").resolve(ConfigResolveOptions.defaults())
     val system = ActorSystem(name = "identity-100", config = config)
+
+    system.log.info(s"Identity 100 starting...")
     system.actorOf(IdentityMatcherActor.props(config.getConfig("app")))
+    system.log.info(s"Identity 100 running.")
   }
 
 }
