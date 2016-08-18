@@ -4,11 +4,8 @@ services:
   cassandra:
     image: cassandra:3
 
-  zookeeper:
-    image: wurstmeister/zookeeper
-
   kafka:
-    image: wurstmeister/kafka
+    image: spotify/kafka
 
   it:
     image: eigengo/rsa-it:latest
