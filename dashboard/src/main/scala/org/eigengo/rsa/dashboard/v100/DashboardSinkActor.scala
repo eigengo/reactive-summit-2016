@@ -40,7 +40,7 @@ object DashboardSinkActor {
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
 
-    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf) //.withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }

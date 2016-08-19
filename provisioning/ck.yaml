@@ -7,18 +7,22 @@ services:
       service: kafka
     ports:
       - "9092:9092"
+    extra_hosts:
+      - "kafka:127.0.0.1"
     expose:
       - "9092"
     environment:
-      ADVERTISED_HOST: localhost
+      ADVERTISED_HOST: "localhost"
       ADVERTISED_PORT: "9092"
+      NUM_PARTITIONS: 3
+      AUTO_CREATE_TOPICS: "true"
       TOPICS: "tweet-image,scene,identity"
 
-  cassandra:
-    extends:
-      file: all.template
-      service: cassandra
-    ports:
-      - "9042:9042"
-    expose:
-      - "9042"
+#  cassandra:
+#    extends:
+#      file: all.template
+#      service: cassandra
+#    ports:
+#      - "9042:9042"
+#    expose:
+#      - "9042"

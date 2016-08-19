@@ -5,7 +5,7 @@ services:
     image: cassandra:3
 
   kafka:
-    image: spotify/kafka
+    image: cakesolutions/kafka:0.10.0.0
 
   it:
     image: eigengo/rsa-it:latest

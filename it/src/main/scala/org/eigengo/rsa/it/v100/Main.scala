@@ -32,7 +32,7 @@ object Main {
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
   def main(args: Array[String]): Unit = {
-    val count = 100
+    val count = 1
 
     Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 

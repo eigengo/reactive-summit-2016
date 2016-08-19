@@ -72,7 +72,7 @@ object IdentityMatcherActor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[IdentityMatcherActor], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[IdentityMatcherActor], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher)// .withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }

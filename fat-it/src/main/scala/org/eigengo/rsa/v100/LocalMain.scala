@@ -7,8 +7,8 @@ object LocalMain {
     System.setProperty("CASSANDRA_JOURNAL_CPS", "localhost:9042")
     System.setProperty("CASSANDRA_SNAPSHOT_CPS", "localhost:9042")
 
-    org.eigengo.rsa.dashboard.v100.Main.main(args)
-    org.eigengo.rsa.scene.v100.Main.main(args)
+    //org.eigengo.rsa.dashboard.v100.Main.main(args)
+    //org.eigengo.rsa.scene.v100.Main.main(args)
     //org.eigengo.rsa.identity.v100.Main.main(args)
     org.eigengo.rsa.it.v100.Main.main(args)
   }
