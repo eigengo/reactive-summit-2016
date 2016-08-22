@@ -27,6 +27,7 @@ import org.eigengo.rsa.Envelope
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 object Main {
   private val logger = LoggerFactory.getLogger(Main.getClass)
@@ -49,11 +50,11 @@ object Main {
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
     while (true) {
-      val futures: Seq[Future[RecordMetadata]] = (0 until count).map { _ ⇒
+      val futures: Seq[Future[RecordMetadata]] = (0 until count).flatMap { _ ⇒
         val payload = ByteString.copyFrom(bytes)
-        val ret = producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload)))
+        val ret = Try(producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload))))
         print(".")
-        ret
+        ret.toOption
       }
       val future = Future.sequence(futures)
 

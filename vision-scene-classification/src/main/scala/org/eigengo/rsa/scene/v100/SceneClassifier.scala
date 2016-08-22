@@ -20,7 +20,7 @@ package org.eigengo.rsa.scene.v100
 
 import java.io._
 
-import org.canova.image.loader.ImageLoader
+import org.datavec.image.loader.ImageLoader
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 

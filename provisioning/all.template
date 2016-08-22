@@ -4,8 +4,11 @@ services:
   cassandra:
     image: cassandra:3
 
+  zookeeper:
+    image: wurstmeister/zookeeper
+
   kafka:
-    image: cakesolutions/kafka:0.10.0.0
+    image: wurstmeister/kafka
 
   it:
     image: eigengo/rsa-it:latest

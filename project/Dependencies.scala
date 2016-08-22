@@ -20,7 +20,7 @@ object Dependencies {
   }
 
   object akka {
-    private val version = "2.4.7"
+    private val version = "2.4.9"
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
@@ -34,7 +34,7 @@ object Dependencies {
 
   object nd4j {
 
-    private val version = "0.4-rc3.10"
+    private val version = "0.5.0"
     private lazy val osArchClassifier = {
       val rawOsName = System.getProperty("os.name").toLowerCase
       val rawArch = System.getProperty("os.arch").toLowerCase
@@ -58,7 +58,7 @@ object Dependencies {
   val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
 
   object deeplearning4j {
-    private val version = "0.4-rc3.10"
+    private val version = "0.5.0"
 
     val core = "org.deeplearning4j" % "deeplearning4j-core" % version
   }
