@@ -10,24 +10,38 @@
 </head>
 <body>
 <h1>Dashboard</h1>
-<div id="container">
-    Starting...
-</div>
+<div id="messages"></div>
+<div id="byHandle"></div>
 
 <script type="text/babel">
       class ExampleApplication extends React.Component {
         render() {
           var message = `Have ${this.props.handles} handles.`;
+          return <p>{message}</p>;
+        }
+      }
 
+      class ByHandle extends React.Component {
+        render() {
+          var message = `Have ${this.props.messages.map(s => JSON.stringify(s))} messages.`;
           return <p>{message}</p>;
         }
       }
 
       var allHandles = new WebSocket("ws://localhost:8080/dashboard");
+      var honzam399 = new WebSocket("ws://localhost:8080/dashboard/@honzam399");
+
       allHandles.onmessage = function(evt) {
         ReactDOM.render(
           <ExampleApplication handles={JSON.parse(evt.data)} />,
-          document.getElementById('container')
+          document.getElementById('messages')
+        );
+      };
+
+      honzam399.onmessage = function(evt) {
+        ReactDOM.render(
+          <ByHandle messages={JSON.parse(evt.data)} />,
+          document.getElementById('byHandle')
         );
       };
 </script>
