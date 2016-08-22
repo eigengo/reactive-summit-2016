@@ -20,23 +20,34 @@ package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
-object Main extends DashboardService {
+object Main extends App with DashboardService {
+  Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
+  val config = ConfigFactory.load("dashboard.conf").resolve(ConfigResolveOptions.defaults())
+  implicit val system = ActorSystem(name = "dashboard-100", config = config)
+  implicit val materializer = ActorMaterializer()
+  import system.dispatcher
 
-  def main(args: Array[String]): Unit = {
-    Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
+  system.log.info(s"Dashboard 100 starting...")
 
-    val config = ConfigFactory.load("dashboard.conf").resolve(ConfigResolveOptions.defaults())
-    implicit val system = ActorSystem(name = "dashboard-100", config = config)
-    implicit val materializer = ActorMaterializer()
-    import system.dispatcher
-
-    system.log.info(s"Dashboard 100 starting...")
-    system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
-    Http(system).bindAndHandle(dashboardRoute, "0.0.0.0", 8080)
-    system.log.info(s"Dashboard 100 running.")
+  val route: Route = {
+    if ("FALSE".equalsIgnoreCase(System.getenv("EMBEDDED_SERVER"))) {
+      dashboardRoute
+    } else {
+      dashboardRoute ~ getFromResourceDirectory("")
+    }
   }
+
+  lazy val activeHandlesSource: Source[List[String], _] = Source.actorPublisher[List[String]](ActiveHandlesActor.props)
+
+  def eventsPerHandleSource(handle: String): Source[String, _] = Source.actorPublisher[String](EventsPerHandleActor.props(handle))
+
+  system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
+  Http(system).bindAndHandle(route, "0.0.0.0", 8080)
+  system.log.info(s"Dashboard 100 running.")
 
 }

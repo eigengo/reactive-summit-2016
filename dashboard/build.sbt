@@ -7,3 +7,5 @@ mappings in Universal <++= (packageBin in Compile, sourceDirectory) map { (_, sr
 }
 
 enablePlugins(JavaServerAppPackaging, DockerPlugin)
+
+unmanagedResourceDirectories in Compile += baseDirectory.value / "webapp"
