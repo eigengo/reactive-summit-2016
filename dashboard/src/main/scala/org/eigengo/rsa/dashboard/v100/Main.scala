@@ -23,6 +23,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
+import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
 object Main extends App with DashboardService {
@@ -42,9 +43,9 @@ object Main extends App with DashboardService {
     }
   }
 
-  lazy val activeHandlesSource: Source[List[String], _] = Source.actorPublisher[List[String]](ActiveHandlesActor.props)
+  lazy val activeHandlesSource: Source[List[String], _] = Source.actorPublisher(ActiveHandlesActor.props)
 
-  def eventsPerHandleSource(handle: String): Source[String, _] = Source.actorPublisher[String](EventsPerHandleActor.props(handle))
+  def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _] = Source.actorPublisher(EventsPerHandleActor.props(handle))
 
   system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
   Http(system).bindAndHandle(route, "0.0.0.0", 8080)

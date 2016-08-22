@@ -26,7 +26,7 @@ object EventsPerHandleActor {
   def props(handle: String): Props = Props(classOf[EventsPerHandleActor], handle)
 }
 
-class EventsPerHandleActor(handle: String) extends ActorPublisher[String] {
+class EventsPerHandleActor(handle: String) extends ActorPublisher[List[GeneratedMessage]] {
   private var messages: List[GeneratedMessage] = Nil
 
   @scala.throws(classOf[Exception])
@@ -45,7 +45,7 @@ class EventsPerHandleActor(handle: String) extends ActorPublisher[String] {
   override def receive: Receive = {
     case (`handle`, message: GeneratedMessage) ⇒
       messages = (message :: messages).take(10)
-      onNext(messages.toString())
+      onNext(messages)
     case ReceiveTimeout ⇒
       onCompleteThenStop()
   }

@@ -1,7 +1,10 @@
 package org.eigengo.rsa
 
+import java.util.concurrent.TimeUnit
+
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.MediaType.Compressible
+import akka.http.scaladsl.model.ws.TextMessage
 import akka.http.scaladsl.model.{ContentType, ContentTypes, HttpEntity, MediaType}
 import akka.http.scaladsl.unmarshalling.Unmarshaller.UnsupportedContentTypeException
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
@@ -11,11 +14,43 @@ import com.trueaccord.scalapb.json.JsonFormat
 import com.trueaccord.scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
 import scala.annotation.StaticAnnotation
-import scala.concurrent.Future
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 trait ScalaPBMarshalling {
   private val protobufContentType = ContentType(MediaType.applicationBinary("octet-stream", Compressible, "proto"))
   private val applicationJsonContentType = ContentTypes.`application/json`
+
+  trait ToTextMessageMarshaller[-A] {
+    def apply(value: A): TextMessage
+  }
+
+  def marshalTextMessage[A](value: A)(implicit m: ToTextMessageMarshaller[A]): TextMessage = m(value)
+
+  implicit object StringToTextMessageMarshaller extends ToTextMessageMarshaller[String] {
+    override def apply(value: String): TextMessage = TextMessage('"' + value + '"')
+  }
+
+  implicit def scalaPBToTextMessageMarshaller[A <: GeneratedMessage]: ToTextMessageMarshaller[A] = new ToTextMessageMarshaller[A] {
+    override def apply(value: A): TextMessage = TextMessage(JsonFormat.toJsonString(value))
+  }
+
+  implicit def listToEntityMarshaller[A : ToTextMessageMarshaller]: ToTextMessageMarshaller[Seq[A]] = new ToTextMessageMarshaller[Seq[A]] {
+    val m = implicitly[ToTextMessageMarshaller[A]]
+
+    override def apply(value: Seq[A]): TextMessage = {
+      val result = StringBuilder.newBuilder
+      result.append("[")
+      value.foreach { x ⇒
+        if (result.length > 1) result.append(",")
+        result.append(m(x) match {
+          case TextMessage.Strict(text) ⇒ text
+          case _ ⇒ "?"
+        })
+      }
+      result.append("]")
+      TextMessage(result.toString())
+    }
+  }
 
   @ScalaPBMarshalling.permit
   def scalaPBFromRequestUnmarshaller[O <: GeneratedMessage with Message[O]](companion: GeneratedMessageCompanion[O]): FromEntityUnmarshaller[O] = {
