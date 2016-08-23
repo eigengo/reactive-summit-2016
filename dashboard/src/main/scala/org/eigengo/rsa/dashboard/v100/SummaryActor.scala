@@ -18,23 +18,20 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
-import akka.actor.{Props, ReceiveTimeout}
+import akka.actor.Props
 import akka.stream.actor.ActorPublisher
-import com.trueaccord.scalapb.GeneratedMessage
+import akka.stream.actor.ActorPublisherMessage.Request
 
-object EventsPerHandleActor {
-  def props(handle: String): Props = Props(classOf[EventsPerHandleActor], handle)
+object SummaryActor {
+  lazy val props: Props = Props[SummaryActor]
 }
 
-class EventsPerHandleActor(handle: String) extends ActorPublisher[List[GeneratedMessage]] {
-  private var messages: List[GeneratedMessage] = Nil
+class SummaryActor extends ActorPublisher[List[String]] {
+  private var activeHandles: Set[String] = Set.empty
 
   @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
-    import scala.concurrent.duration._
-
     context.system.eventStream.subscribe(self, classOf[InternalMessage])
-    context.setReceiveTimeout(120.seconds)
   }
 
   @scala.throws(classOf[Exception])
@@ -43,11 +40,11 @@ class EventsPerHandleActor(handle: String) extends ActorPublisher[List[Generated
   }
 
   override def receive: Receive = {
-    case InternalMessage(`handle`, _, _, message) ⇒
-      messages = (message :: messages).take(10)
-      onNext(messages)
-    case ReceiveTimeout ⇒
-      onCompleteThenStop()
+    case InternalMessage(handle, _, _, _) ⇒
+      activeHandles = activeHandles + handle
+      onNext(activeHandles.toList.sorted)
+    case Request(n) ⇒
+      onNext(activeHandles.toList.sorted)
   }
 
 }

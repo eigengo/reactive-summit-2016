@@ -3,16 +3,18 @@ syntax = "proto3";
 package org.eigengo.rsa.dashboard.v100;
 
 message Summary {
-    repeated PerHandle topHandles = 1;
+    int32 totalHandles = 1;
+    repeated HandleSummary topHandleSummaries = 2;
 }
 
-message PerHandle {
+message HandleSummary {
     string handle = 1;
     repeated Item items = 2;
 
     message Item {
-        string description = 1;
-        repeated bytes images = 2;
-        string text = 3;
+        int64 timestamp = 1;
+        string description = 2;
+        repeated bytes images = 3;
+        string text = 4;
     }
 }

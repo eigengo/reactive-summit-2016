@@ -43,7 +43,7 @@ object Main extends App with DashboardService {
     }
   }
 
-  lazy val activeHandlesSource: Source[List[String], _] = Source.actorPublisher(ActiveHandlesActor.props)
+  lazy val activeHandlesSource: Source[List[String], _] = Source.actorPublisher(SummaryActor.props)
 
   def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _] = Source.actorPublisher(EventsPerHandleActor.props(handle))
 

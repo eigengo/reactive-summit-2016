@@ -19,7 +19,6 @@
 package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
-import akka.routing.RandomPool
 import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -74,8 +73,10 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
         case (None, _) ⇒
           context.system.log.error("Received (None, _) from Kafka.")
         case (Some(handle), envelope) ⇒
-          messageFromEnvelope(envelope).foreach { message ⇒
-            context.system.eventStream.publish((handle, message))
+          messageFromEnvelope(envelope).map { message ⇒
+            InternalMessage(handle, envelope.ingestionTimestamp, envelope.correlationId, message)
+          }.foreach { message ⇒
+            context.system.eventStream.publish(message)
             // TODO: Save to Cassandra
           }
           kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
