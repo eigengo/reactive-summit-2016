@@ -36,6 +36,7 @@ lazy val dashboard = project.in(file("dashboard"))
     libraryDependencies += Dependencies.akka.http.core,
     libraryDependencies += Dependencies.akka.http.experimental,
     libraryDependencies += Dependencies.scalapb.json4s,
+    libraryDependencies += Dependencies.troy,
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
@@ -43,7 +44,6 @@ lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
   .settings(commonSettings)
   .settings(deeplearning4jSettings)
   .settings(Seq(
-    libraryDependencies += Dependencies.cats,
     libraryDependencies += Dependencies.scalaTest % Test,
     libraryDependencies += Dependencies.scalaCheck % Test
   ))
@@ -82,7 +82,6 @@ lazy val `vision-scene-classification` = project.in(file("vision-scene-classific
   .settings(deeplearning4jSettings)
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
-    libraryDependencies += Dependencies.cats,
     libraryDependencies += Dependencies.scalapb.json4s,
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
@@ -136,6 +135,7 @@ lazy val commonSettings = Seq(
   resolvers += "Maven central" at "http://repo1.maven.org/maven2/",
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   resolvers += Resolver.bintrayRepo("krasserm", "maven"),
+  resolvers += Resolver.bintrayRepo("tabdulradi", "maven"),
   autoCompilerPlugins := true
 )
 

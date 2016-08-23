@@ -6,16 +6,18 @@ object Dependencies {
   // ScalaTest 2.2.6 is not compatible with ScalaCheck > 1.12.5
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.12.5"
 
-  val protobuf = "com.google.protobuf" % "protobuf-java" % "3.0.0-beta-3"
+  val protobuf = "com.google.protobuf" % "protobuf-java" % "3.0.0"
 
-  val cats = "org.typelevel" %% "cats" % "0.6.1"
+  // val cats = "org.typelevel" %% "cats" % "0.6.1"
+
+  val troy = "io.github.cassandra-scala" %% "troy" % "0.0.2"
 
   object cakesolutions {
     val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.10.0.0-RC2"
   }
 
   object scalapb {
-    val runtime = "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.38"
+    val runtime = "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.38" exclude("com.google.protobuf", "protobuf-java")
     val json4s = "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.1"
   }
 
@@ -24,7 +26,7 @@ object Dependencies {
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
-    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6"
+    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" exclude("com.datastax.cassandra", "cassandra-driver-core")
 
     object http {
       val core = "com.typesafe.akka" %% "akka-http-core" % version
