@@ -8,7 +8,7 @@ object Dependencies {
 
   val protobuf = "com.google.protobuf" % "protobuf-java" % "3.0.0"
 
-  // val cats = "org.typelevel" %% "cats" % "0.6.1"
+  val cats = "org.typelevel" %% "cats" % "0.6.1"
 
   val troy = "io.github.cassandra-scala" %% "troy" % "0.0.2"
 

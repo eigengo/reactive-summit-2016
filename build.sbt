@@ -37,6 +37,7 @@ lazy val dashboard = project.in(file("dashboard"))
     libraryDependencies += Dependencies.akka.http.experimental,
     libraryDependencies += Dependencies.scalapb.json4s,
     libraryDependencies += Dependencies.troy,
+    libraryDependencies += Dependencies.cats,
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 

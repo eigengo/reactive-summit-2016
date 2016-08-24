@@ -12,9 +12,15 @@ message HandleSummary {
     repeated Item items = 2;
 
     message Item {
-        int64 timestamp = 1;
+        int32 windowSize = 1;
         string description = 2;
-        repeated bytes images = 3;
-        string text = 4;
+        repeated Tweet tweets = 3;
+
+        message Tweet {
+            repeated bytes images = 1;
+            string text = 2;
+            // more stuff here
+        }
+
     }
 }

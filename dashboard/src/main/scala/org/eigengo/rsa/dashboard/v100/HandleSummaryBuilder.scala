@@ -18,19 +18,77 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
-import com.trueaccord.scalapb.GeneratedMessage
-import org.eigengo.rsa.dashboard.v100.HandleSummary.Item
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
 
-class HandleSummaryBuilder(handle: String) {
-  private var items: List[Item] = Nil
-  private var lastIngestionTimestamp: Long = 0L
+import scala.collection.SortedSet
 
-  def +(message: GeneratedMessage): HandleSummaryBuilder = message match {
-    case Scene(labels) ⇒ ???
-    case Identity(identifiedFaces, unknownFaces) ⇒ ???
-    // case Text(text) =>
+object HandleSummaryBuilder {
+  implicit object InternalMessageOrdering extends Ordering[InternalMessage] {
+    override def compare(x: InternalMessage, y: InternalMessage): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
   }
+}
+
+class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
+  import HandleSummaryBuilder._
+
+  private var messages = SortedSet.empty[InternalMessage]
+
+  def appendAndBuild(message: InternalMessage): HandleSummary = {
+    def acceptableIngestionTimestampDiff(m1: InternalMessage, m2: InternalMessage): Boolean =
+      math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30L * 1000 * 1000 * 1000
+      //                                                        s    ms     μs     ns
+
+    def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
+      val windowSize = ((window.last.ingestionTimestamp - window.head.ingestionTimestamp) / 1000000).toInt
+      val groups = window.map(_.message).groupBy(_.getClass)
+
+      val identities = groups
+        .get(classOf[Identity])
+        .map(_.asInstanceOf[List[Identity]])
+        .map(_.foldLeft((List.empty[Identity.IdentifiedFace], List.empty[Identity.UnknownFace])) {
+          case ((i, u), f) ⇒ (i ++ f.identifiedFaces, u ++ f.unknownFaces)
+        })
+
+      val sceneLabels = groups
+        .get(classOf[Scene])
+        .map(_.asInstanceOf[List[Scene]])
+        .map(_.foldLeft(List.empty[String]) { (result, scene) ⇒ result ++ scene.labels.map(_.label) }.distinct)
+
+      val sb = new StringBuilder()
+
+      identities.foreach { case (identifiedFaces, unknownFaces) ⇒
+        if (identifiedFaces.nonEmpty || unknownFaces.nonEmpty) sb.append("with")
+        if (identifiedFaces.nonEmpty) sb.append(s" the famous ${identifiedFaces.map(_.name).mkString(", ")}")
+        if (unknownFaces.nonEmpty) sb.appendAll(s" ${unknownFaces.length} other people")
+      }
+
+      sceneLabels.foreach { labels ⇒
+        if (sb.nonEmpty) sb.append(" and ")
+        if (labels.nonEmpty) sb.append(s"${labels.mkString(", ")}")
+      }
+
+      HandleSummary.Item(windowSize, sb.toString(), Nil)
+    }
+
+    def transformMessages(): HandleSummary = {
+      val windows = messages.foldLeft(List.empty[List[InternalMessage]]) {
+        case (Nil, msg) ⇒ List(List(msg))
+        case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last, msg) ⇒ nel.init :+ (nel.last :+ msg)
+        case (nel, msg) ⇒ nel :+ List(msg)
+      }
+
+      val items = windows.map(itemFromWindow)
+
+      HandleSummary(handle, items)
+    }
+
+    if (!messages.exists(_.correlationId == message.correlationId)) {
+      messages = (messages + message).takeRight(maximumMessages)
+    }
+
+    transformMessages()
+  }
+
 
 }
