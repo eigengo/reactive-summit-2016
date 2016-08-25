@@ -35,12 +35,14 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
   private var messages = SortedSet.empty[InternalMessage]
 
   def appendAndBuild(message: InternalMessage): HandleSummary = {
+    import scala.concurrent.duration._
+
     def acceptableIngestionTimestampDiff(m1: InternalMessage, m2: InternalMessage): Boolean =
-      math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30L * 1000 * 1000 * 1000
+      math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toMicros
       //                                                        s    ms     μs     ns
 
     def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
-      val windowSize = ((window.last.ingestionTimestamp - window.head.ingestionTimestamp) / 1000000).toInt
+      val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).micros.toMillis.toInt
       val groups = window.map(_.message).groupBy(_.getClass)
 
       val identities = groups

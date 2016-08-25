@@ -24,10 +24,11 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 
 class HandleSummaryBuilderTest extends FlatSpec with PropertyChecks with Matchers {
+  import scala.concurrent.duration._
 
   it should "handle single item" in {
     val builder = new HandleSummaryBuilder("@honzam399")
-    val summary = builder.appendAndBuild(InternalMessage("@honzam399", 1, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    val summary = builder.appendAndBuild(InternalMessage("@honzam399", 0, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
 
     summary.handle shouldBe "@honzam399"
     summary.items should have size 1
@@ -37,15 +38,23 @@ class HandleSummaryBuilderTest extends FlatSpec with PropertyChecks with Matcher
 
   it should "handle multiple items in a single window" in {
     val builder = new HandleSummaryBuilder("@honzam399")
-    builder.appendAndBuild(InternalMessage("@honzam399", 100L * 1000 * 1000, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.appendAndBuild(InternalMessage("@honzam399", 200L * 1000 * 1000, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
-    builder.appendAndBuild(InternalMessage("@honzam399", 300L * 1000 * 1000, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    val summary = builder.appendAndBuild(InternalMessage("@honzam399", 400L * 1000 * 1000, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
+    builder.appendAndBuild(InternalMessage("@honzam399", 1.second.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.appendAndBuild(InternalMessage("@honzam399", 2.second.toMicros, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
+    builder.appendAndBuild(InternalMessage("@honzam399", 3.second.toMicros, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    val summary = builder.appendAndBuild(InternalMessage("@honzam399", 4.second.toMicros, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
 
     summary.handle shouldBe "@honzam399"
     summary.items should have size 1
-    summary.items.head.windowSize shouldBe 300
+    summary.items.head.windowSize shouldBe 3.second.toMillis
     summary.items.head.description shouldBe "with the famous Jamie Allen and beer, cake"
+  }
+
+  it should "window tweets properly" in {
+    val builder = new HandleSummaryBuilder("@honzam399")
+    builder.appendAndBuild(InternalMessage("@honzam399", 1.minute.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    val summary = builder.appendAndBuild(InternalMessage("@honzam399", 2.minute.toMicros, "b", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+
+    summary.items should have size 2
   }
 
 }
