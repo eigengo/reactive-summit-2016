@@ -31,16 +31,18 @@ object HandleSummaryBuilder {
 
 class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
   import HandleSummaryBuilder._
+  import scala.concurrent.duration._
 
   private var messages = SortedSet.empty[InternalMessage]
 
-  def appendAndBuild(message: InternalMessage): HandleSummary = {
-    import scala.concurrent.duration._
+  private def acceptableIngestionTimestampDiff(m1: InternalMessage)(m2: InternalMessage): Boolean =
+    math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toMicros
+  //                                                        s    ms     μs     ns
 
-    def acceptableIngestionTimestampDiff(m1: InternalMessage, m2: InternalMessage): Boolean =
-      math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toMicros
-      //                                                        s    ms     μs     ns
+  def isActive(lastIngestedMessage: InternalMessage): Boolean =
+    messages.lastOption.forall(acceptableIngestionTimestampDiff(lastIngestedMessage))
 
+  def build(): HandleSummary = {
     def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
       val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).micros.toMillis.toInt
       val groups = window.map(_.message).groupBy(_.getClass)
@@ -76,7 +78,7 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
     def transformMessages(): HandleSummary = {
       val windows = messages.foldLeft(List.empty[List[InternalMessage]]) {
         case (Nil, msg) ⇒ List(List(msg))
-        case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last, msg) ⇒ nel.init :+ (nel.last :+ msg)
+        case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last)(msg) ⇒ nel.init :+ (nel.last :+ msg)
         case (nel, msg) ⇒ nel :+ List(msg)
       }
 
@@ -85,11 +87,13 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
       HandleSummary(handle, items)
     }
 
+    transformMessages()
+  }
+
+  def append(message: InternalMessage): Unit = {
     if (!messages.exists(_.correlationId == message.correlationId)) {
       messages = (messages + message).takeRight(maximumMessages)
     }
-
-    transformMessages()
   }
 
 

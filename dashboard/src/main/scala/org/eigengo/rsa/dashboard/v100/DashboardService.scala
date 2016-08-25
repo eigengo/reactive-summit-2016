@@ -27,7 +27,7 @@ import scala.concurrent.ExecutionContext
 
 trait DashboardService extends Directives with PathMatchers with ScalaPBMarshalling {
 
-  def activeHandlesSource: Source[List[String], _]
+  def summarySource: Source[Summary, _]
 
   def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _]
 
@@ -39,7 +39,7 @@ trait DashboardService extends Directives with PathMatchers with ScalaPBMarshall
     } ~
     path("dashboard") {
       get {
-        handleWebSocketMessages(Flow.fromSinkAndSource(Sink.ignore, activeHandlesSource.map(x ⇒ marshalTextMessage(x))))
+        handleWebSocketMessages(Flow.fromSinkAndSource(Sink.ignore, summarySource.map(x ⇒ marshalTextMessage(x))))
       }
     }
   }

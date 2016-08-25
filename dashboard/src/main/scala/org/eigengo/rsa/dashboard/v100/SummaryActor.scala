@@ -24,10 +24,17 @@ import akka.stream.actor.ActorPublisherMessage.Request
 
 object SummaryActor {
   lazy val props: Props = Props[SummaryActor]
+
+  implicit object HandleSummaryOrdering extends Ordering[HandleSummary] {
+    override def compare(x: HandleSummary, y: HandleSummary): Int = x.handle.compare(y.handle)
+  }
+
 }
 
-class SummaryActor extends ActorPublisher[List[String]] {
-  private var activeHandles: Set[String] = Set.empty
+class SummaryActor extends ActorPublisher[Summary] {
+  import SummaryActor._
+  private val maximumTopHandles = 100
+  private val summary: collection.mutable.Map[String, HandleSummaryBuilder] = collection.mutable.Map()
 
   @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
@@ -40,11 +47,19 @@ class SummaryActor extends ActorPublisher[List[String]] {
   }
 
   override def receive: Receive = {
-    case InternalMessage(handle, _, _, _) ⇒
-      activeHandles = activeHandles + handle
-      onNext(activeHandles.toList.sorted)
+    case m@InternalMessage(handle, _, _, _) ⇒
+      val inactiveEntry = if (summary.size < maximumTopHandles) None else summary.find {
+        case (h, b) ⇒ h != handle && !b.isActive(m)
+      }
+      inactiveEntry.foreach { case (h, _) ⇒ summary.remove(h) }
+
+      val builder = summary.getOrElse(handle, new HandleSummaryBuilder(handle))
+      builder.append(m)
+      summary.put(handle, builder)
+
+      onNext(Summary(topHandleSummaries = summary.values.map(_.build()).toSeq.sorted))
     case Request(n) ⇒
-      onNext(activeHandles.toList.sorted)
+      onNext(Summary(topHandleSummaries = summary.values.map(_.build()).toSeq.sorted))
   }
 
 }
