@@ -15,7 +15,7 @@
 <script type="text/babel">
       class ExampleApplication extends React.Component {
         render() {
-          var message = `${this.props.topHandleSummaries}`;
+          var message = `${JSON.stringify(this.props.topHandleSummaries)}`;
           return <pre>{message}</pre>;
         }
       }

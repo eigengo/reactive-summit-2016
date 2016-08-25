@@ -18,6 +18,8 @@
  */
 package org.eigengo.rsa.it.v100
 
+import java.util.UUID
+
 import cakesolutions.kafka.{KafkaProducer, KafkaProducerRecord, KafkaSerializer}
 import com.google.protobuf.ByteString
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
@@ -52,7 +54,12 @@ object Main {
     while (true) {
       val futures: Seq[Future[RecordMetadata]] = (0 until count).flatMap { _ ⇒
         val payload = ByteString.copyFrom(bytes)
-        val ret = Try(producer.send(KafkaProducerRecord("tweet-image", "@honzam399", Envelope(payload = payload))))
+        val ret = Try(producer.send(KafkaProducerRecord("tweet-image", "@honzam399",
+          Envelope(version = 100,
+            ingestionTimestamp = System.nanoTime(),
+            processingTimestamp = System.nanoTime(),
+            correlationId = UUID.randomUUID().toString,
+            payload = payload))))
         print(".")
         ret.toOption
       }
