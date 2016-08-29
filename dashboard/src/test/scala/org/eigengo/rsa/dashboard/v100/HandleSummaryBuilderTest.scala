@@ -39,15 +39,15 @@ class HandleSummaryBuilderTest extends FlatSpec with PropertyChecks with Matcher
 
   it should "handle multiple items in a single window" in {
     val builder = new HandleSummaryBuilder("@honzam399")
-    builder.append(InternalMessage("@honzam399", 1.second.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 2.second.toMicros, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 3.second.toMicros, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 4.second.toMicros, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
+    builder.append(InternalMessage("@honzam399", 10.second.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 20.second.toMicros, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 30.second.toMicros, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 40.second.toMicros, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
     val summary = builder.build()
 
     summary.handle shouldBe "@honzam399"
     summary.items should have size 1
-    summary.items.head.windowSize shouldBe 3.second.toMillis
+    summary.items.head.windowSize shouldBe 30.second.toMillis
     summary.items.head.description shouldBe "with the famous Jamie Allen and beer, cake"
   }
 

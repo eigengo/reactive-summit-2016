@@ -48,10 +48,9 @@ class SummaryActor extends ActorPublisher[Summary] {
 
   override def receive: Receive = {
     case m@InternalMessage(handle, _, _, _) ⇒
-      val inactiveEntry = if (summary.size < maximumTopHandles) None else summary.find {
-        case (h, b) ⇒ h != handle && !b.isActive(m)
+      if (summary.size > maximumTopHandles) {
+        summary.find { case (h, b) ⇒ h != handle && !b.isActive(m) }.foreach { case (h, _) ⇒ summary.remove(h) }
       }
-      inactiveEntry.foreach { case (h, _) ⇒ summary.remove(h) }
 
       val builder = summary.getOrElse(handle, new HandleSummaryBuilder(handle))
       builder.append(m)
