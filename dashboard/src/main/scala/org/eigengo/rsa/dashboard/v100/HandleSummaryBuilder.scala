@@ -36,15 +36,14 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
   private var messages = SortedSet.empty[InternalMessage]
 
   private def acceptableIngestionTimestampDiff(m1: InternalMessage)(m2: InternalMessage): Boolean =
-    math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toMicros
-  //                                                        s    ms     μs     ns
+    math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toNanos
 
   def isActive(lastIngestedMessage: InternalMessage): Boolean =
     messages.lastOption.forall(acceptableIngestionTimestampDiff(lastIngestedMessage))
 
   def build(): HandleSummary = {
     def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
-      val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).micros.toMillis.toInt
+      val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).nanos.toMillis.toInt
       val groups = window.map(_.message).groupBy(_.getClass)
 
       val identities = groups

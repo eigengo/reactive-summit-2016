@@ -39,10 +39,10 @@ class HandleSummaryBuilderTest extends FlatSpec with PropertyChecks with Matcher
 
   it should "handle multiple items in a single window" in {
     val builder = new HandleSummaryBuilder("@honzam399")
-    builder.append(InternalMessage("@honzam399", 10.second.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 20.second.toMicros, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 30.second.toMicros, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 40.second.toMicros, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
+    builder.append(InternalMessage("@honzam399", 10.second.toNanos, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 20.second.toNanos, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 30.second.toNanos, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 40.second.toNanos, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
     val summary = builder.build()
 
     summary.handle shouldBe "@honzam399"
@@ -53,8 +53,8 @@ class HandleSummaryBuilderTest extends FlatSpec with PropertyChecks with Matcher
 
   it should "window tweets properly" in {
     val builder = new HandleSummaryBuilder("@honzam399")
-    builder.append(InternalMessage("@honzam399", 1.minute.toMicros, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 2.minute.toMicros, "b", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 1.minute.toNanos, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(InternalMessage("@honzam399", 2.minute.toNanos, "b", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
     val summary = builder.build()
 
     summary.items should have size 2
