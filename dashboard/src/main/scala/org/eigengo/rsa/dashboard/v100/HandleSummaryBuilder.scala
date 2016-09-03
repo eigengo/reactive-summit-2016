@@ -90,10 +90,9 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
   }
 
   def append(message: InternalMessage): Unit = {
-    if (!messages.exists(_.correlationId == message.correlationId)) {
+    if (!messages.exists(_.messageId == message.messageId)) {
       messages = (messages + message).takeRight(maximumMessages)
     }
   }
-
 
 }

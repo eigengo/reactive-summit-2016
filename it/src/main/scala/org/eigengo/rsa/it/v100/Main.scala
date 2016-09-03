@@ -58,6 +58,7 @@ object Main {
           Envelope(version = 100,
             ingestionTimestamp = System.nanoTime(),
             processingTimestamp = System.nanoTime(),
+            messageId = UUID.randomUUID().toString,
             correlationId = UUID.randomUUID().toString,
             payload = payload))))
         print(".")

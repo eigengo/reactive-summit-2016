@@ -19,6 +19,7 @@
 package org.eigengo.rsa.scene.v100
 
 import java.io.ByteArrayInputStream
+import java.util.UUID
 
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RandomPool
@@ -97,6 +98,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
               processingTimestamp = System.nanoTime(),
               ingestionTimestamp = envelope.ingestionTimestamp,
               correlationId = envelope.correlationId,
+              messageId = UUID.randomUUID().toString,
               messageType = "scene",
               payload = ByteString.copyFrom(scene.toByteArray))
 

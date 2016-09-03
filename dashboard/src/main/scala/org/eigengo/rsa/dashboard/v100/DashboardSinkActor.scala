@@ -74,7 +74,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
           context.system.log.error("Received (None, _) from Kafka.")
         case (Some(handle), envelope) ⇒
           messageFromEnvelope(envelope).map { message ⇒
-            InternalMessage(handle, envelope.ingestionTimestamp, envelope.correlationId, message)
+            InternalMessage(handle, envelope.ingestionTimestamp, envelope.messageId, message)
           }.foreach { message ⇒
             context.system.eventStream.publish(message)
             // TODO: Save to Cassandra

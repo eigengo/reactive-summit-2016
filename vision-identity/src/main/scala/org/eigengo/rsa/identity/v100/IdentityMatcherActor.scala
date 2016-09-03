@@ -19,6 +19,7 @@
 package org.eigengo.rsa.identity.v100
 
 import java.io.ByteArrayInputStream
+import java.util.UUID
 
 import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy}
 import akka.persistence.PersistentActor
@@ -113,6 +114,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           processingTimestamp = System.nanoTime(),
           ingestionTimestamp = ingestionTimestamp,
           correlationId = correlationId,
+          messageId = UUID.randomUUID().toString,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
         producer.send(KafkaProducerRecord("identity", handle, out))
@@ -136,6 +138,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           processingTimestamp = System.nanoTime(),
           ingestionTimestamp = ingestionTimestamp,
           correlationId = correlationId,
+          messageId = UUID.randomUUID().toString,
           messageType = "identity",
           payload = ByteString.copyFrom(identity.toByteArray))
         producer.send(KafkaProducerRecord("identity", handle, response))
