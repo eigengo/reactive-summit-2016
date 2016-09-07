@@ -26,7 +26,8 @@ object Dependencies {
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
-    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" exclude("com.datastax.cassandra", "cassandra-driver-core")
+    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" intransitive()
+
 
     object http {
       val core = "com.typesafe.akka" %% "akka-http-core" % version
