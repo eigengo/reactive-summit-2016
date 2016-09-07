@@ -79,8 +79,8 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
             context.system.eventStream.publish(message)
             // TODO: Save to Cassandra
           }
-          kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
+      kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
   }
 
   private def messageFromEnvelope(envelope: Envelope): Option[GeneratedMessage] = {
