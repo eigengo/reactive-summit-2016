@@ -48,7 +48,7 @@ object Main {
       KafkaSerializer[Envelope](_.toByteArray)
     ))
 
-    val is = getClass.getResourceAsStream("/beer.jpg")
+    val is = getClass.getResourceAsStream("/salad.jpg")
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
     while (true) {
@@ -61,7 +61,6 @@ object Main {
             messageId = UUID.randomUUID().toString,
             correlationId = UUID.randomUUID().toString,
             payload = payload))))
-        print(".")
         ret.toOption
       }
       val future = Future.sequence(futures)
@@ -69,7 +68,7 @@ object Main {
       import scala.concurrent.duration._
       logger.info(Await.result(future, 1.minute).toString())
 
-      Thread.sleep(10000)
+      Thread.sleep(1000)
     }
     producer.close()
   }

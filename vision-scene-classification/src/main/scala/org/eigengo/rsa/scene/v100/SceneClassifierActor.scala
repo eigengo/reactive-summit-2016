@@ -56,7 +56,7 @@ object SceneClassifierActor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, producerConf, sceneClassifier)//.withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, producerConf, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }

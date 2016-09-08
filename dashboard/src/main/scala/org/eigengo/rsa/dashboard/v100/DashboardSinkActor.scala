@@ -19,6 +19,7 @@
 package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.routing.RandomPool
 import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -39,7 +40,7 @@ object DashboardSinkActor {
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
 
-    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf) //.withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }

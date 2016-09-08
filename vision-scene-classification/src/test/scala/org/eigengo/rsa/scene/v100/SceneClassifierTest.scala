@@ -36,11 +36,13 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
     */
   private def forAllScenes[U](block: (InputStream, String) ⇒ U): Unit = {
     val scene = new File(getClass.getResource("/scene").toURI)
+    val labelFileNamePattern = "(\\w+).*".r
     scene.listFiles().foreach { file ⇒
-      val splits = file.getName.split("\\.")
-      val is = new FileInputStream(file)
-      block(is, splits(0))
-      is.close()
+      labelFileNamePattern.findFirstMatchIn(file.getName).foreach { label ⇒
+        val is = new FileInputStream(file)
+        block(is, label.group(1))
+        is.close()
+      }
     }
   }
 
