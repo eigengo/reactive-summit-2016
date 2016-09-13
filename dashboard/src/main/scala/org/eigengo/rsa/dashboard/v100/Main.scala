@@ -18,10 +18,12 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
-import akka.actor.ActorSystem
+import akka.actor.Actor.Receive
+import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
@@ -33,7 +35,7 @@ object Main extends App with DashboardService {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
-  system.log.info(s"Dashboard 100 starting...")
+  system.log.info("Dashboard 100 starting...")
 
   val route: Route = {
     if ("FALSE".equalsIgnoreCase(System.getenv("EMBEDDED_SERVER"))) {
@@ -43,11 +45,27 @@ object Main extends App with DashboardService {
     }
   }
 
-  lazy val summarySource: Source[Summary, _] = Source.actorPublisher(SummaryActor.props)
+  private class SummarySourceActor extends ActorPublisher[Summary] {
+    override def preStart(): Unit = {
+      context.system.eventStream.subscribe(self, classOf[Summary])
+    }
+
+    override def postStop(): Unit = {
+      context.system.eventStream.unsubscribe(self)
+    }
+
+    override def receive: Receive = {
+      case s: Summary if totalDemand > 0 ⇒ onNext(s)
+    }
+  }
+
+  lazy val summarySource: Source[Summary, _] = Source.actorPublisher(Props[SummarySourceActor])
 
   def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _] = Source.actorPublisher(EventsPerHandleActor.props(handle))
 
   system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
+  system.actorOf(SummaryActor.props)
+
   Http(system).bindAndHandle(route, "0.0.0.0", 8080)
   system.log.info(s"Dashboard 100 running.")
 

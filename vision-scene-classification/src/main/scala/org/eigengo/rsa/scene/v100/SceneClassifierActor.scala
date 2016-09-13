@@ -102,12 +102,10 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
               messageType = "scene",
               payload = ByteString.copyFrom(scene.toByteArray))
 
-            import context.dispatcher
-            producer
-              .send(KafkaProducerRecord("scene", handle, out))
-              .onComplete(_ ⇒ kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true))
+            producer.send(KafkaProducerRecord("scene", handle, out))
           }
       }
+      kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
   }
 
 }

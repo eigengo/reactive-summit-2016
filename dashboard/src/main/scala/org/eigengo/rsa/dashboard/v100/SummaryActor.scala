@@ -19,8 +19,7 @@
 package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.Props
-import akka.stream.actor.ActorPublisher
-import akka.stream.actor.ActorPublisherMessage.Request
+import akka.persistence.PersistentActor
 
 object SummaryActor {
   lazy val props: Props = Props[SummaryActor]
@@ -31,34 +30,45 @@ object SummaryActor {
 
 }
 
-class SummaryActor extends ActorPublisher[Summary] {
+class SummaryActor extends PersistentActor {
   import SummaryActor._
   private val maximumTopHandles = 100
-  private val summary: collection.mutable.Map[String, HandleSummaryBuilder] = collection.mutable.Map()
+  private val topHandleHSIBuilders: collection.mutable.Map[String, HandleSummaryItemsBuilder] = collection.mutable.Map()
 
-  @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
     context.system.eventStream.subscribe(self, classOf[InternalMessage])
   }
 
-  @scala.throws(classOf[Exception])
   override def postStop(): Unit = {
     context.system.eventStream.unsubscribe(self)
   }
 
-  override def receive: Receive = {
-    case m@InternalMessage(handle, _, _, _) ⇒
-      if (summary.size > maximumTopHandles) {
-        summary.find { case (h, b) ⇒ h != handle && !b.isActive(m) }.foreach { case (h, _) ⇒ summary.remove(h) }
-      }
+  override val persistenceId: String = "summary"
 
-      val builder = summary.getOrElse(handle, new HandleSummaryBuilder(handle))
-      builder.append(m)
-      summary.put(handle, builder)
+  override def receiveRecover: Receive = {
+    case m: InternalMessage ⇒ handleMessage(m)
+  }
 
-      onNext(Summary(topHandleSummaries = summary.values.map(_.build()).toSeq.sorted))
-    case Request(n) ⇒
-      onNext(Summary(topHandleSummaries = summary.values.map(_.build()).toSeq.sorted))
+  override def receiveCommand: Receive = {
+    case m: InternalMessage ⇒ persist(m)(handleMessage)
+  }
+
+  private def handleMessage(message: InternalMessage): Unit = {
+    if (topHandleHSIBuilders.size > maximumTopHandles) {
+      topHandleHSIBuilders.find { case (h, b) ⇒ h != message.handle && !b.isActive(message) }.foreach { case (h, _) ⇒ topHandleHSIBuilders.remove(h) }
+    }
+
+    val builder = topHandleHSIBuilders.getOrElse(message.handle, new HandleSummaryItemsBuilder())
+    builder.append(message)
+    topHandleHSIBuilders.put(message.handle, builder)
+
+    val topHandleSummaries = topHandleHSIBuilders.map {
+      case (k, v) ⇒ HandleSummary(handle = k, v.build())
+    }.toList.sorted
+
+    val summary = Summary(topHandleSummaries = topHandleSummaries)
+    persist(summary)(context.system.eventStream.publish)
+
   }
 
 }

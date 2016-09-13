@@ -29,13 +29,13 @@ import org.eigengo.rsa.Envelope
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Await, Future}
-import scala.util.Try
+import scala.util.{Random, Try}
 
 object Main {
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
   def main(args: Array[String]): Unit = {
-    val count = 1
+    val handles = List("@honzam399", "@anirvan_c", "@alexlashford", "@odersky", "@jamieallen", "@jonasboner")
 
     Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
@@ -52,9 +52,9 @@ object Main {
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
     while (true) {
-      val futures: Seq[Future[RecordMetadata]] = (0 until count).flatMap { _ ⇒
+      val futures: Seq[Future[RecordMetadata]] = Random.shuffle(handles).take(Random.nextInt(2)).flatMap { handle ⇒
         val payload = ByteString.copyFrom(bytes)
-        val ret = Try(producer.send(KafkaProducerRecord("tweet-image", "@honzam399",
+        val ret = Try(producer.send(KafkaProducerRecord("tweet-image", handle,
           Envelope(version = 100,
             ingestionTimestamp = System.nanoTime(),
             processingTimestamp = System.nanoTime(),
@@ -68,7 +68,7 @@ object Main {
       import scala.concurrent.duration._
       logger.info(Await.result(future, 1.minute).toString())
 
-      Thread.sleep(1000)
+      Thread.sleep(500)
     }
     producer.close()
   }

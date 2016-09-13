@@ -130,8 +130,9 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           faceExtractor.extract(is).foreach { result ⇒
             persistAll(result)(fi ⇒ self ! IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap))
           }
-          kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
+      kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+
     case IdentifyFace(ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
       identityMatcher.identify(new ByteArrayInputStream(faceRGBBitmap)).foreach { identity ⇒
         val response = Envelope(version = 100,

@@ -23,14 +23,14 @@ import org.eigengo.rsa.scene.v100.Scene
 
 import scala.collection.SortedSet
 
-object HandleSummaryBuilder {
+object HandleSummaryItemsBuilder {
   implicit object InternalMessageOrdering extends Ordering[InternalMessage] {
     override def compare(x: InternalMessage, y: InternalMessage): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
   }
 }
 
-class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
-  import HandleSummaryBuilder._
+class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
+  import HandleSummaryItemsBuilder._
   import scala.concurrent.duration._
 
   private var messages = SortedSet.empty[InternalMessage]
@@ -41,7 +41,7 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
   def isActive(lastIngestedMessage: InternalMessage): Boolean =
     messages.lastOption.forall(acceptableIngestionTimestampDiff(lastIngestedMessage))
 
-  def build(): HandleSummary = {
+  def build(): List[HandleSummary.Item] = {
     def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
       val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).nanos.toMillis.toInt
       val groups = window.map(_.message).groupBy(_.getClass)
@@ -74,16 +74,14 @@ class HandleSummaryBuilder(handle: String, maximumMessages: Int = 500) {
       HandleSummary.Item(windowSize, sb.toString(), Nil)
     }
 
-    def transformMessages(): HandleSummary = {
+    def transformMessages(): List[HandleSummary.Item] = {
       val windows = messages.foldLeft(List.empty[List[InternalMessage]]) {
         case (Nil, msg) ⇒ List(List(msg))
         case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last)(msg) ⇒ nel.init :+ (nel.last :+ msg)
         case (nel, msg) ⇒ nel :+ List(msg)
       }
 
-      val items = windows.map(itemFromWindow)
-
-      HandleSummary(handle, items)
+      windows.map(itemFromWindow)
     }
 
     transformMessages()
