@@ -35,7 +35,7 @@ object Main {
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
   def main(args: Array[String]): Unit = {
-    val handles = List("@honzam399", "@anirvan_c", "@alexlashford", "@odersky", "@jamieallen", "@jonasboner")
+    val handles = (0 until 100).map(x ⇒ s"@x")
 
     Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 
@@ -52,7 +52,8 @@ object Main {
     val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
 
     while (true) {
-      val futures: Seq[Future[RecordMetadata]] = Random.shuffle(handles).take(Random.nextInt(2)).flatMap { handle ⇒
+      val futures: Seq[Future[RecordMetadata]] =
+        Random.shuffle(handles).take(1 + Random.nextInt(4)).flatMap { handle ⇒
         val payload = ByteString.copyFrom(bytes)
         val ret = Try(producer.send(KafkaProducerRecord("tweet-image", handle,
           Envelope(version = 100,
