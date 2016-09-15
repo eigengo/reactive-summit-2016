@@ -61,8 +61,6 @@ object Main extends App with DashboardService {
 
   lazy val summarySource: Source[Summary, _] = Source.actorPublisher(Props[SummarySourceActor])
 
-  def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _] = Source.actorPublisher(EventsPerHandleActor.props(handle))
-
   system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
   system.actorOf(SummaryActor.props)
 

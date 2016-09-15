@@ -20,7 +20,6 @@ package org.eigengo.rsa.dashboard.v100
 
 import akka.http.scaladsl.server.{Directives, PathMatchers, Route}
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import com.trueaccord.scalapb.GeneratedMessage
 import org.eigengo.rsa.ScalaPBMarshalling
 
 import scala.concurrent.ExecutionContext
@@ -29,14 +28,7 @@ trait DashboardService extends Directives with PathMatchers with ScalaPBMarshall
 
   def summarySource: Source[Summary, _]
 
-  def eventsPerHandleSource(handle: String): Source[List[GeneratedMessage], _]
-
   def dashboardRoute(implicit executionContext: ExecutionContext): Route = {
-    path("dashboard" / Remaining) { handle ⇒
-      get {
-        handleWebSocketMessages(Flow.fromSinkAndSource(Sink.ignore, eventsPerHandleSource(handle).map(x ⇒ marshalTextMessage(x))))
-      }
-    } ~
     path("dashboard") {
       get {
         handleWebSocketMessages(Flow.fromSinkAndSource(Sink.ignore, summarySource.map(x ⇒ marshalTextMessage(x))))

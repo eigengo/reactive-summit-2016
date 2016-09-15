@@ -58,12 +58,10 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
     case _ ⇒ SupervisorStrategy.Restart
   }
 
-  @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
     kafkaConsumerActor ! Subscribe.AutoPartition(Seq("identity", "scene"))
   }
 
-  @scala.throws(classOf[Exception])
   override def postStop(): Unit = {
     kafkaConsumerActor ! Unsubscribe
   }
@@ -74,20 +72,14 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
         case (None, _) ⇒
           context.system.log.warning("Received (None, _) from Kafka.")
         case (Some(handle), envelope) ⇒
-          messageFromEnvelope(envelope).map { message ⇒
-            InternalMessage(handle, envelope.ingestionTimestamp, envelope.messageId, message)
-          }.foreach { message ⇒
-            context.system.eventStream.publish(message)
-          }
+          context.system.eventStream.publish(
+            PartiallyUnwrappedEnvelope(version = 100,
+              handle = handle,
+              ingestionTimestamp = envelope.ingestionTimestamp,
+              messageId = envelope.messageId,
+              payload = envelope.payload))
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
   }
 
-  private def messageFromEnvelope(envelope: Envelope): Option[GeneratedMessage] = {
-    (envelope.version, envelope.messageType) match {
-      case (100, "identity") ⇒ Some(identity.v100.Identity.parseFrom(envelope.payload.toByteArray))
-      case (100, "scene") ⇒ Some(scene.v100.Scene.parseFrom(envelope.payload.toByteArray))
-      case _ ⇒ None
-    }
-  }
 }

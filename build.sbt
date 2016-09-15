@@ -153,6 +153,8 @@ def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSett
   scalaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   PB.flatPackage in PB.protobufConfig := true,
   sourceDirectories in PB.protobufConfig <+= PB.externalIncludePath in PB.protobufConfig,
+  //sourceDirectories in PB.protobufConfig <+= resourceDirectory in Compile,
+  //PB.includePaths in PB.protobufConfig ++= (resourceDirectories in Compile).value,
   // The Scala SBT plugin adds a dependency on 2.6.1 protobuf, but we're running on 3.0.0
   libraryDependencies -= "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value
 ) ++ protocols.map(p ⇒ PB.externalIncludePath in PB.protobufConfig := ((classDirectory in p) in Compile).value)

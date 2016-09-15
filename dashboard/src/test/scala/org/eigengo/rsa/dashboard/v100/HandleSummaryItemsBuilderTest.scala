@@ -18,6 +18,8 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
+import com.google.protobuf.ByteString
+import com.trueaccord.scalapb.GeneratedMessage
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
 import org.scalatest.{FlatSpec, Matchers}
@@ -26,9 +28,14 @@ import org.scalatest.prop.PropertyChecks
 class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Matchers {
   import scala.concurrent.duration._
 
+  private def pue(ingestionTimestamp: Long, messageId: String, messageType: String, message: GeneratedMessage): PartiallyUnwrappedEnvelope = {
+    val payload = ByteString.copyFrom(message.toByteArray)
+    PartiallyUnwrappedEnvelope(version = 100, ingestionTimestamp = ingestionTimestamp, handle = "@honzam399", messageType = messageType, messageId = messageId, payload = payload)
+  }
+
   it should "handle single item" in {
     val builder = new HandleSummaryItemsBuilder()
-    builder.append(InternalMessage("@honzam399", 0, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 0, messageId = "a", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
     val items = builder.build()
 
     items should have size 1
@@ -38,10 +45,10 @@ class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Ma
 
   it should "handle multiple items in a single window" in {
     val builder = new HandleSummaryItemsBuilder()
-    builder.append(InternalMessage("@honzam399", 10.second.toNanos, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 20.second.toNanos, "b", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 30.second.toNanos, "c", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 40.second.toNanos, "d", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
+    builder.append(pue(ingestionTimestamp = 10.second.toNanos, messageId = "a", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 20.second.toNanos, messageId = "b", messageType = "scene", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 30.second.toNanos, messageId = "c", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 40.second.toNanos, messageId = "d", messageType = "identity", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
     val items = builder.build()
 
     items should have size 1
@@ -51,8 +58,8 @@ class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Ma
 
   it should "window tweets properly" in {
     val builder = new HandleSummaryItemsBuilder()
-    builder.append(InternalMessage("@honzam399", 1.minute.toNanos, "a", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(InternalMessage("@honzam399", 2.minute.toNanos, "b", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 1.minute.toNanos, messageId = "a", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
+    builder.append(pue(ingestionTimestamp = 2.minute.toNanos, messageId = "b", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
     val items = builder.build()
 
     items should have size 2

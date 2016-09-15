@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package org.eigengo.rsa.dashboard.v100;
+
+message PartiallyUnwrappedEnvelope {
+    int32 version = 1;
+    int64 ingestionTimestamp = 2;
+    string handle = 3;
+    string messageType = 4;
+    string messageId = 5;
+    bytes payload = 6;
+}

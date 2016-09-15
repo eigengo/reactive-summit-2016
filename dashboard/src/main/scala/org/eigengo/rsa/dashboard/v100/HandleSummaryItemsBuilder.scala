@@ -18,14 +18,16 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
+import com.trueaccord.scalapb.GeneratedMessage
+import org.eigengo.rsa.{identity, scene}
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
 
 import scala.collection.SortedSet
 
 object HandleSummaryItemsBuilder {
-  implicit object InternalMessageOrdering extends Ordering[InternalMessage] {
-    override def compare(x: InternalMessage, y: InternalMessage): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
+  implicit object PartiallyUnwrappedEnvelopeOrdering extends Ordering[PartiallyUnwrappedEnvelope] {
+    override def compare(x: PartiallyUnwrappedEnvelope, y: PartiallyUnwrappedEnvelope): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
   }
 }
 
@@ -33,18 +35,26 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
   import HandleSummaryItemsBuilder._
   import scala.concurrent.duration._
 
-  private var messages = SortedSet.empty[InternalMessage]
+  private var messages = SortedSet.empty[PartiallyUnwrappedEnvelope]
 
-  private def acceptableIngestionTimestampDiff(m1: InternalMessage)(m2: InternalMessage): Boolean =
+  private def acceptableIngestionTimestampDiff(m1: PartiallyUnwrappedEnvelope)(m2: PartiallyUnwrappedEnvelope): Boolean =
     math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toNanos
 
-  def isActive(lastIngestedMessage: InternalMessage): Boolean =
+  def isActive(lastIngestedMessage: PartiallyUnwrappedEnvelope): Boolean =
     messages.lastOption.forall(acceptableIngestionTimestampDiff(lastIngestedMessage))
 
   def build(): List[HandleSummary.Item] = {
-    def itemFromWindow(window: List[InternalMessage]): HandleSummary.Item = {
+    def messageFromEnvelope(envelope: PartiallyUnwrappedEnvelope): Option[GeneratedMessage] = {
+      (envelope.version, envelope.messageType) match {
+        case (100, "identity") ⇒ Some(identity.v100.Identity.parseFrom(envelope.payload.toByteArray))
+        case (100, "scene") ⇒ Some(scene.v100.Scene.parseFrom(envelope.payload.toByteArray))
+        case _ ⇒ None
+      }
+    }
+
+    def itemFromWindow(window: List[PartiallyUnwrappedEnvelope]): HandleSummary.Item = {
       val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).nanos.toMillis.toInt
-      val groups = window.map(_.message).groupBy(_.getClass)
+      val groups = window.flatMap(msg ⇒ messageFromEnvelope(msg)).groupBy(_.getClass)
 
       val identities = groups
         .get(classOf[Identity])
@@ -75,7 +85,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
     }
 
     def transformMessages(): List[HandleSummary.Item] = {
-      val windows = messages.foldLeft(List.empty[List[InternalMessage]]) {
+      val windows = messages.foldLeft(List.empty[List[PartiallyUnwrappedEnvelope]]) {
         case (Nil, msg) ⇒ List(List(msg))
         case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last)(msg) ⇒ nel.init :+ (nel.last :+ msg)
         case (nel, msg) ⇒ nel :+ List(msg)
@@ -87,7 +97,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
     transformMessages()
   }
 
-  def append(message: InternalMessage): Unit = {
+  def append(message: PartiallyUnwrappedEnvelope): Unit = {
     if (!messages.exists(_.messageId == message.messageId)) {
       messages = (messages + message).takeRight(maximumMessages)
     }

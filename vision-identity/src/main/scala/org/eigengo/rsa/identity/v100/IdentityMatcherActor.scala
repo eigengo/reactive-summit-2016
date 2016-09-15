@@ -39,8 +39,6 @@ object IdentityMatcherActor {
 
   import FaceExtractor._
 
-  private case class IdentifyFace(ingestionTimestamp: Long, correlationId: String, handle: String, faceRGBBitmap: Array[Byte])
-
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
@@ -97,19 +95,17 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
 
   override val persistenceId: String = "identity-matcher-actor"
 
-  @scala.throws(classOf[Exception])
   override def preStart(): Unit = {
     kafkaConsumerActor ! Subscribe.AutoPartition(Seq("tweet-image"))
   }
 
-  @scala.throws(classOf[Exception])
   override def postStop(): Unit = {
     kafkaConsumerActor ! Unsubscribe
   }
 
   override def receiveRecover: Receive = {
-    case IdentifyFace(ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
-      identityMatcher.identify(new ByteArrayInputStream(faceRGBBitmap)).foreach { identity ⇒
+    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
+      identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
         val out = Envelope(version = 100,
           processingTimestamp = System.nanoTime(),
           ingestionTimestamp = ingestionTimestamp,
@@ -128,13 +124,13 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           faceExtractor.extract(is).foreach { result ⇒
-            persistAll(result)(fi ⇒ self ! IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap))
+            persistAll(result)(fi ⇒ self ! IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, ByteString.copyFrom(fi.rgbBitmap)))
           }
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
 
-    case IdentifyFace(ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
-      identityMatcher.identify(new ByteArrayInputStream(faceRGBBitmap)).foreach { identity ⇒
+    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
+      identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
         val response = Envelope(version = 100,
           processingTimestamp = System.nanoTime(),
           ingestionTimestamp = ingestionTimestamp,
