@@ -25,6 +25,7 @@ lazy val dashboard = project.in(file("dashboard"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
+  .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
   .settings(dockerSettings)
@@ -43,6 +44,13 @@ lazy val dashboard = project.in(file("dashboard"))
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
+lazy val `scalapb-akka-serializer` = project.in(file("scalapb-akka-serializer"))
+  .settings(commonSettings)
+  .settings(Seq(
+    libraryDependencies += Dependencies.scalapb.runtime,
+    libraryDependencies += Dependencies.akka.actor
+  ))
+
 lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
   .settings(commonSettings)
   .settings(deeplearning4jSettings)
@@ -56,6 +64,7 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
   .dependsOn(`deeplearning4j-common`)
+  .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
   .settings(dockerSettings)
