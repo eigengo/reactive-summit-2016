@@ -28,9 +28,9 @@ import org.scalatest.prop.PropertyChecks
 class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Matchers {
   import scala.concurrent.duration._
 
-  private def pue(ingestionTimestamp: Long, messageId: String, messageType: String, message: GeneratedMessage): PartiallyUnwrappedEnvelope = {
+  private def pue(ingestionTimestamp: Long, messageId: String, messageType: String, message: GeneratedMessage): TweetEnvelope = {
     val payload = ByteString.copyFrom(message.toByteArray)
-    PartiallyUnwrappedEnvelope(version = 100, ingestionTimestamp = ingestionTimestamp, handle = "@honzam399", messageType = messageType, messageId = messageId, payload = payload)
+    TweetEnvelope(version = 100, ingestionTimestamp = ingestionTimestamp, handle = "@honzam399", messageType = messageType, messageId = messageId, payload = payload)
   }
 
   it should "handle single item" in {

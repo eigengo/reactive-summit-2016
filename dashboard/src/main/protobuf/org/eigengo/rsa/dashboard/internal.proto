@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package org.eigengo.rsa.dashboard.v100;
 
-message PartiallyUnwrappedEnvelope {
+message TweetEnvelope {
     int32 version = 1;
     int64 ingestionTimestamp = 2;
     string handle = 3;

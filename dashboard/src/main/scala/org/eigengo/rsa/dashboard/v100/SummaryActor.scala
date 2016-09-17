@@ -38,7 +38,7 @@ class SummaryActor extends PersistentActor {
   private val topHandleHSIBuilders: collection.mutable.Map[String, HandleSummaryItemsBuilder] = collection.mutable.Map()
 
   override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[PartiallyUnwrappedEnvelope])
+    context.system.eventStream.subscribe(self, classOf[TweetEnvelope])
   }
 
   override def postStop(): Unit = {
@@ -48,14 +48,14 @@ class SummaryActor extends PersistentActor {
   override val persistenceId: String = "summary"
 
   override def receiveRecover: Receive = {
-    case m: PartiallyUnwrappedEnvelope ⇒ handleMessage(m)
+    case m: TweetEnvelope ⇒ handleMessage(m)
   }
 
   override def receiveCommand: Receive = {
-    case m: PartiallyUnwrappedEnvelope ⇒ persist(m)(handleMessage)
+    case m: TweetEnvelope ⇒ persist(m)(handleMessage)
   }
 
-  private def handleMessage(message: PartiallyUnwrappedEnvelope): Unit = {
+  private def handleMessage(message: TweetEnvelope): Unit = {
     if (topHandleHSIBuilders.size > maximumTopHandles) {
       topHandleHSIBuilders.find { case (h, b) ⇒ h != message.handle && !b.isActive(message) }.foreach { case (h, _) ⇒ topHandleHSIBuilders.remove(h) }
     }

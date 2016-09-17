@@ -10,11 +10,13 @@
 </head>
 <body>
 <h1>Dashboard</h1>
-<div id="summary">Loading...</div>
+<div id="topHandleSummaries">Loading...</div>
 
 <script type="text/babel">
       class ExampleApplication extends React.Component {
         render() {
+          //return this.props.topHandleSummaries.topHandleSummaries.map(s => <pre>s</pre>);
+
           var message = `${JSON.stringify(this.props.topHandleSummaries)}`;
           return <pre>{message}</pre>;
         }
@@ -25,7 +27,7 @@
       allHandles.onmessage = function(evt) {
         ReactDOM.render(
           <ExampleApplication topHandleSummaries={JSON.parse(evt.data)} />,
-          document.getElementById('summary')
+          document.getElementById('topHandleSummaries')
         );
       };
 </script>

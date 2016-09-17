@@ -73,10 +73,11 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
           context.system.log.warning("Received (None, _) from Kafka.")
         case (Some(handle), envelope) ⇒
           context.system.eventStream.publish(
-            PartiallyUnwrappedEnvelope(version = 100,
+            TweetEnvelope(version = 100,
               handle = handle,
               ingestionTimestamp = envelope.ingestionTimestamp,
               messageId = envelope.messageId,
+              messageType = envelope.messageType,
               payload = envelope.payload))
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
