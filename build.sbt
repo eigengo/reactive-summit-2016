@@ -46,9 +46,12 @@ lazy val dashboard = project.in(file("dashboard"))
 
 lazy val `scalapb-akka-serializer` = project.in(file("scalapb-akka-serializer"))
   .settings(commonSettings)
+  .settings(protobufSettings(Seq()))
   .settings(Seq(
     libraryDependencies += Dependencies.scalapb.runtime,
-    libraryDependencies += Dependencies.akka.actor
+    libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.scalaTest % Test,
+    libraryDependencies += Dependencies.scalaCheck % Test
   ))
 
 lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
@@ -161,11 +164,8 @@ def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSett
   javaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   scalaSource in PB.protobufConfig <<= (sourceDirectory in Compile)(_ / "generated"),
   PB.flatPackage in PB.protobufConfig := true,
-  sourceDirectories in PB.protobufConfig <+= PB.externalIncludePath in PB.protobufConfig,
-  //sourceDirectories in PB.protobufConfig <+= resourceDirectory in Compile,
-  //PB.includePaths in PB.protobufConfig ++= (resourceDirectories in Compile).value,
-  // The Scala SBT plugin adds a dependency on 2.6.1 protobuf, but we're running on 3.0.0
-  libraryDependencies -= "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value
+  sourceDirectories in PB.protobufConfig <+= PB.externalIncludePath in PB.protobufConfig
+  //libraryDependencies -= "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value
 ) ++ protocols.map(p ⇒ PB.externalIncludePath in PB.protobufConfig := ((classDirectory in p) in Compile).value)
 
 
