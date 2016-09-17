@@ -52,7 +52,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
       }
     }
 
-    def itemFromWindow(window: List[TweetEnvelope]): HandleSummary.Item = {
+    def itemFromWindow(window: List[TweetEnvelope]): Option[HandleSummary.Item] = {
       val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).nanos.toMillis.toInt
       val groups = window.flatMap(msg ⇒ messageFromEnvelope(msg)).groupBy(_.getClass)
 
@@ -81,7 +81,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         if (labels.nonEmpty) sb.append(s"${labels.mkString(", ")}")
       }
 
-      HandleSummary.Item(windowSize, sb.toString(), Nil)
+      if (sb.nonEmpty) Some(HandleSummary.Item(windowSize, sb.toString(), Nil)) else None
     }
 
     def transformMessages(): List[HandleSummary.Item] = {
@@ -91,7 +91,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         case (nel, msg) ⇒ nel :+ List(msg)
       }
 
-      windows.map(itemFromWindow)
+      windows.flatMap(itemFromWindow)
     }
 
     transformMessages()

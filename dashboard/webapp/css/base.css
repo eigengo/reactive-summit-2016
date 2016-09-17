@@ -7,56 +7,31 @@ body {
   padding: 30px;
 }
 
-a {
-  color: #4183c4;
-  text-decoration: none;
+#topHandleSummaries {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    overflow-x: scroll;
+    white-space: nowrap;
 }
 
-a:hover {
-  text-decoration: underline;
+#topHandleSummaries li {
+    display: inline-block;
+    width: 200pt;
+    vertical-align: top;
 }
 
-code {
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-family: "Bitstream Vera Sans Mono", Consolas, Courier, monospace;
-  font-size: 12px;
-  margin: 0 2px;
-  padding: 0px 5px;
+ul.handleSummaryItems {
+    background: #ccc;
+    overflow-x: scroll;
+    white-space: normal;
+    padding: 0;
 }
 
-h1, h2, h3, h4 {
-  font-weight: bold;
-  margin: 0 0 15px;
-  padding: 0;
+ul.handleSummaryItems li {
+
 }
 
-h1 {
-  border-bottom: 1px solid #ddd;
-  font-size: 2.5em;
-  font-weight: bold;
-  margin: 0 0 15px;
-  padding: 0;
-}
-
-h2 {
-  border-bottom: 1px solid #eee;
-  font-size: 2em;
-}
-
-h3 {
-  font-size: 1.5em;
-}
-
-h4 {
-  font-size: 1.2em;
-}
-
-p, ul {
-  margin: 15px 0;
-}
-
-ul {
-  padding-left: 30px;
+div.description {
+   font-style: italic;
 }
