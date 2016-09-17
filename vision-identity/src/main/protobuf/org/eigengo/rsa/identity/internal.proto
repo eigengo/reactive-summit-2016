@@ -9,3 +9,12 @@ message IdentifyFace {
     string hanlde = 4;
     bytes rgbBitmap = 5;
 }
+
+message FaceImage {
+    double confidence = 1;
+    int32 x = 2;
+    int32 y = 3;
+    int32 w = 4;
+    int32 h = 5;
+    bytes rgbBitmap = 6;
+}

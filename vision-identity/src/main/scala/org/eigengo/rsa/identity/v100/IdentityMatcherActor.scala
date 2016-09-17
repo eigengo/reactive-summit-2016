@@ -37,8 +37,6 @@ import scala.util.Success
 
 object IdentityMatcherActor {
 
-  import FaceExtractor._
-
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
@@ -47,8 +45,8 @@ object IdentityMatcherActor {
       val aspectRatio = faceImage.w.toDouble / faceImage.h.toDouble
 
       faceImage.confidence > 0.5 &&
-        faceImage.w > 50 && faceImage.h > 50 &&
-        aspectRatio > 0.5 && aspectRatio < 1.5
+      faceImage.w > 50 && faceImage.h > 50 &&
+      aspectRatio > 0.5 && aspectRatio < 1.5
     }
 
     val faceExtractor = new FaceExtractor(isFaceAcceptable)
@@ -124,7 +122,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           faceExtractor.extract(is).foreach { result ⇒
-            persistAll(result)(fi ⇒ self ! IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, ByteString.copyFrom(fi.rgbBitmap)))
+            persistAll(result)(fi ⇒ self ! IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap))
           }
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
