@@ -22,12 +22,14 @@ object Dependencies {
   }
 
   object akka {
-    private val version = "2.4.9"
+    private val version = "2.4.10"
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
     val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" intransitive()
 
+    val testKit = "com.typesafe.akka" %% "akka-testkit" % version
+    val persistenceInMemory = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.3.8"
 
     object http {
       val core = "com.typesafe.akka" %% "akka-http-core" % version

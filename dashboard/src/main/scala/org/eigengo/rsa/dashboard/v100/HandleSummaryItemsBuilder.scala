@@ -19,11 +19,9 @@
 package org.eigengo.rsa.dashboard.v100
 
 import com.trueaccord.scalapb.GeneratedMessage
-import org.eigengo.rsa.{identity, scene}
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
-
-import scala.collection.SortedSet
+import org.eigengo.rsa.{identity, scene}
 
 object HandleSummaryItemsBuilder {
   implicit object TweetEnvelopeOrdering extends Ordering[TweetEnvelope] {
@@ -33,9 +31,10 @@ object HandleSummaryItemsBuilder {
 
 class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
   import HandleSummaryItemsBuilder._
+
   import scala.concurrent.duration._
 
-  private var messages = SortedSet.empty[TweetEnvelope]
+  private var messages = List.empty[TweetEnvelope]
 
   private def acceptableIngestionTimestampDiff(m1: TweetEnvelope)(m2: TweetEnvelope): Boolean =
     math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toNanos
@@ -46,8 +45,8 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
   def build(): List[HandleSummary.Item] = {
     def messageFromEnvelope(envelope: TweetEnvelope): Option[GeneratedMessage] = {
       (envelope.version, envelope.messageType) match {
-        case (100, "identity") ⇒ Some(identity.v100.Identity.parseFrom(envelope.payload.toByteArray))
-        case (100, "scene") ⇒ Some(scene.v100.Scene.parseFrom(envelope.payload.toByteArray))
+        case (100, "identity") ⇒ identity.v100.Identity.validate(envelope.payload.toByteArray).toOption
+        case (100, "scene") ⇒ scene.v100.Scene.validate(envelope.payload.toByteArray).toOption
         case _ ⇒ None
       }
     }
@@ -99,7 +98,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
 
   def append(message: TweetEnvelope): Unit = {
     if (!messages.exists(_.messageId == message.messageId)) {
-      messages = (messages + message).takeRight(maximumMessages)
+      messages = (message :: messages).takeRight(maximumMessages).sorted
     }
   }
 

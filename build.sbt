@@ -41,7 +41,12 @@ lazy val dashboard = project.in(file("dashboard"))
     libraryDependencies += Dependencies.scalapb.json4s,
     libraryDependencies += Dependencies.troy,
     libraryDependencies += Dependencies.cats,
-    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient,
+
+    libraryDependencies += Dependencies.akka.testKit % Test,
+    libraryDependencies += Dependencies.scalaTest % Test,
+    libraryDependencies += Dependencies.scalaCheck % Test,
+    libraryDependencies += Dependencies.akka.persistenceInMemory % Test
   ))
 
 lazy val `scalapb-akka-serializer` = project.in(file("scalapb-akka-serializer"))
@@ -151,6 +156,7 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.bintrayRepo("cakesolutions", "maven"),
   resolvers += Resolver.bintrayRepo("krasserm", "maven"),
   resolvers += Resolver.bintrayRepo("tabdulradi", "maven"),
+  resolvers += Resolver.jcenterRepo,
   autoCompilerPlugins := true
 )
 

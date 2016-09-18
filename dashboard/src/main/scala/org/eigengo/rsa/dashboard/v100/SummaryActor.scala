@@ -20,8 +20,6 @@ package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.Props
 import akka.persistence.PersistentActor
-import com.trueaccord.scalapb.GeneratedMessage
-import org.eigengo.rsa.{identity, scene}
 
 object SummaryActor {
   lazy val props: Props = Props[SummaryActor]
@@ -49,6 +47,7 @@ class SummaryActor extends PersistentActor {
 
   override def receiveRecover: Receive = {
     case m: TweetEnvelope ⇒ handleMessage(m)
+    case x ⇒ println(x)
   }
 
   override def receiveCommand: Receive = {
@@ -57,7 +56,9 @@ class SummaryActor extends PersistentActor {
 
   private def handleMessage(message: TweetEnvelope): Unit = {
     if (topHandleHSIBuilders.size > maximumTopHandles) {
-      topHandleHSIBuilders.find { case (h, b) ⇒ h != message.handle && !b.isActive(message) }.foreach { case (h, _) ⇒ topHandleHSIBuilders.remove(h) }
+      topHandleHSIBuilders
+        .find { case (h, b) ⇒ h != message.handle && !b.isActive(message) }
+        .foreach { case (h, _) ⇒ topHandleHSIBuilders.remove(h) }
     }
 
     val builder = topHandleHSIBuilders.getOrElse(message.handle, new HandleSummaryItemsBuilder())
@@ -71,6 +72,5 @@ class SummaryActor extends PersistentActor {
     val summary = Summary(topHandleSummaries = topHandleSummaries)
     persist(summary)(context.system.eventStream.publish)
   }
-
 
 }
