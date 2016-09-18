@@ -47,7 +47,6 @@ class SummaryActor extends PersistentActor {
 
   override def receiveRecover: Receive = {
     case m: TweetEnvelope ⇒ handleMessage(m)
-    case x ⇒ println(x)
   }
 
   override def receiveCommand: Receive = {
