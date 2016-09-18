@@ -131,7 +131,8 @@ lazy val ingest = project.in(file("ingest"))
     libraryDependencies += Dependencies.akka.actor,
     libraryDependencies += Dependencies.akka.http.core,
     libraryDependencies += Dependencies.akka.http.experimental,
-    libraryDependencies += Dependencies.scalapb.json4s
+    libraryDependencies += Dependencies.scalapb.json4s,
+    libraryDependencies += Dependencies.koauth
   ))
 
 lazy val `fat-it` = project.in(file("fat-it"))

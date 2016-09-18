@@ -39,7 +39,7 @@ object Dependencies {
 
   object nd4j {
 
-    private val version = "0.6.0"
+    private val version = "0.5.0"
     private lazy val osArchClassifier = {
       val rawOsName = System.getProperty("os.name").toLowerCase
       val rawArch = System.getProperty("os.arch").toLowerCase
@@ -63,7 +63,7 @@ object Dependencies {
   val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
 
   object deeplearning4j {
-    private val version = "0.6.0"
+    private val version = "0.5.0"
 
     val core = "org.deeplearning4j" % "deeplearning4j-core" % version
   }
@@ -77,5 +77,7 @@ object Dependencies {
   object boofcv {
     val core = "org.boofcv" % "core" % "0.24.1"
   }
+
+  val koauth = "com.hunorkovacs" %% "koauth" % "1.1.0"
 
 }
