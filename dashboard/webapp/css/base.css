@@ -29,7 +29,8 @@ ul.handleSummaryItems {
 }
 
 ul.handleSummaryItems li {
-
+    padding-bottom: 2pt;
+    border-bottom: 1px black solid;
 }
 
 div.description {

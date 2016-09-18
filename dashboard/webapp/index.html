@@ -58,8 +58,8 @@ const app = function(evt) {
   );
 };
 
-var allHandles = new WebSocket("ws://" + window.location.host + "/dashboard");
-allHandles.onmessage = function(evt) { app(evt.data); };
+var dashboard = new WebSocket("ws://" + window.location.host + "/dashboard");
+dashboard.onmessage = ((evt) => { app(evt.data); });
 </script>
 </body>
 </html>
