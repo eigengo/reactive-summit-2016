@@ -19,11 +19,12 @@
 package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.Actor.Receive
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import akka.stream.actor.ActorPublisher
+import akka.stream.actor.ActorPublisherMessage.Request
 import akka.stream.scaladsl.Source
 import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
@@ -45,7 +46,7 @@ object Main extends App with DashboardService {
     }
   }
 
-  private class SummarySourceActor extends ActorPublisher[Summary] {
+  private class SummarySourceActor(summaryActor: ActorRef) extends ActorPublisher[Summary] {
     override def preStart(): Unit = {
       context.system.eventStream.subscribe(self, classOf[Summary])
     }
@@ -55,14 +56,16 @@ object Main extends App with DashboardService {
     }
 
     override def receive: Receive = {
+      case Request(_) ⇒ summaryActor ! SummaryActor.Peek
       case s: Summary if totalDemand > 0 ⇒ onNext(s)
     }
   }
 
-  lazy val summarySource: Source[Summary, _] = Source.actorPublisher(Props[SummarySourceActor])
-
   system.actorOf(DashboardSinkActor.props(config.getConfig("app")))
-  system.actorOf(SummaryActor.props)
+
+  lazy val summaryActor = system.actorOf(SummaryActor.props)
+  lazy val summarySource: Source[Summary, _] = Source.actorPublisher(Props(classOf[SummarySourceActor], summaryActor))
+
 
   Http(system).bindAndHandle(route, "0.0.0.0", 8080)
   system.log.info(s"Dashboard 100 running.")

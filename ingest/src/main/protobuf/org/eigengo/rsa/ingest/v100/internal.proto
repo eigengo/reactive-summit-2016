@@ -6,3 +6,8 @@ message SimplifiedTweet {
     string handle = 1;
     repeated string mediaUrls = 2;
 }
+
+message TweetImage {
+    string handle = 1;
+    bytes content = 2;
+}

@@ -12,8 +12,6 @@ import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringSerializer
 import org.eigengo.rsa.Envelope
 
-import scala.util.Try
-
 object SimplifiedTweetProcessorActor {
 
   def props(config: Config): Props = {
@@ -31,20 +29,22 @@ class SimplifiedTweetProcessorActor(producerConf: KafkaProducer.Conf[String, Env
   implicit val _ = ActorMaterializer()
 
   override def receive: Receive = {
+    case TweetImage(handle, content) ⇒
+      producer.send(KafkaProducerRecord("tweet-image", handle,
+        Envelope(version = 100,
+          ingestionTimestamp = System.nanoTime(),
+          processingTimestamp = System.nanoTime(),
+          messageId = UUID.randomUUID().toString,
+          correlationId = UUID.randomUUID().toString,
+          payload = content)))
     case SimplifiedTweet(handle, mediaUrls) ⇒
       mediaUrls.foreach { mediaUrl ⇒
         import context.dispatcher
+        import scala.concurrent.duration._
         val request = HttpRequest(method = HttpMethods.GET, uri = Uri(mediaUrl))
-        Http(context.system).singleRequest(request).foreach { response ⇒
-          response.entity.dataBytes.runForeach { bs ⇒
-            val _ = Try(producer.send(KafkaProducerRecord("tweet-image", handle,
-              Envelope(version = 100,
-                ingestionTimestamp = System.nanoTime(),
-                processingTimestamp = System.nanoTime(),
-                messageId = UUID.randomUUID().toString,
-                correlationId = UUID.randomUUID().toString,
-                payload = ByteString.copyFrom(bs.toArray)))))
-          }
+        val timeout = 1000.millis
+        Http(context.system).singleRequest(request).flatMap(_.entity.toStrict(timeout)).foreach { entity ⇒
+          self ! TweetImage(handle, ByteString.copyFrom(entity.data.toArray))
         }
       }
   }

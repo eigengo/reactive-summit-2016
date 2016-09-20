@@ -38,9 +38,9 @@ object Main extends App {
     request.foreach { response ⇒
       if (response.status.intValue() == 200) {
         response.entity.dataBytes
-          .scan("")((acc, curr) => if (acc.contains("\r\n")) curr.utf8String else acc + curr.utf8String)
-          .filter(_.contains("\r\n"))
-          .map(json ⇒ SimplifiedTweetFormat.parse(json))
+          .scan("")((acc, curr) => if (acc.contains("\n")) curr.utf8String else acc + curr.utf8String)
+          .filter(x ⇒ x.length > 2 && x.contains("\n"))
+          .map(x ⇒ SimplifiedTweetFormat.parse(x))
           .runForeach {
             case Success(tweet) ⇒
               simplifiedTweetProcessorActor ! tweet

@@ -101,7 +101,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
     kafkaConsumerActor ! Unsubscribe
   }
 
-  override def receiveRecover: Receive = {
+  def handleIdentifyFace: Receive = {
     case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
       identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
         val out = Envelope(version = 100,
@@ -115,7 +115,9 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
       }
   }
 
-  override def receiveCommand: Receive = {
+  override def receiveRecover: Receive = handleIdentifyFace
+
+  override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
         case (None, _) ⇒
@@ -126,18 +128,6 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           }
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
-
-    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
-      identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
-        val response = Envelope(version = 100,
-          processingTimestamp = System.nanoTime(),
-          ingestionTimestamp = ingestionTimestamp,
-          correlationId = correlationId,
-          messageId = UUID.randomUUID().toString,
-          messageType = "identity",
-          payload = ByteString.copyFrom(identity.toByteArray))
-        producer.send(KafkaProducerRecord("identity", handle, response))
-      }
   }
 
 }

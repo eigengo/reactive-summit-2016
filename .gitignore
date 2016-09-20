@@ -1,6 +1,9 @@
 # We don't commit *any* of IntelliJ's files
 .idea/
 
+.DS_Store
+
+
 # We don't want generated stuff
 generated
 

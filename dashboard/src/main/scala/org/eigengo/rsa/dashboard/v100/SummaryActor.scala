@@ -24,6 +24,8 @@ import akka.persistence.PersistentActor
 object SummaryActor {
   lazy val props: Props = Props[SummaryActor]
 
+  case object Peek
+
   implicit object HandleSummaryOrdering extends Ordering[HandleSummary] {
     override def compare(x: HandleSummary, y: HandleSummary): Int = x.handle.compare(y.handle)
   }
@@ -49,8 +51,17 @@ class SummaryActor extends PersistentActor {
     case m: TweetEnvelope ⇒ handleMessage(m)
   }
 
+  def buildSummary(): Summary = {
+    val topHandleSummaries = topHandleHSIBuilders.map {
+      case (k, v) ⇒ HandleSummary(handle = k, v.build())
+    }.toList.sorted
+
+    Summary(topHandleSummaries = topHandleSummaries)
+  }
+
   override def receiveCommand: Receive = {
     case m: TweetEnvelope ⇒ persist(m)(handleMessage)
+    case Peek ⇒ context.system.eventStream.publish(buildSummary())
   }
 
   private def handleMessage(message: TweetEnvelope): Unit = {
@@ -64,12 +75,7 @@ class SummaryActor extends PersistentActor {
     builder.append(message)
     topHandleHSIBuilders.put(message.handle, builder)
 
-    val topHandleSummaries = topHandleHSIBuilders.map {
-      case (k, v) ⇒ HandleSummary(handle = k, v.build())
-    }.toList.sorted
-
-    val summary = Summary(topHandleSummaries = topHandleSummaries)
-    persist(summary)(context.system.eventStream.publish)
+    context.system.eventStream.publish(buildSummary())
   }
 
 }

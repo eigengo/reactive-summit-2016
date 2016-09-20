@@ -121,6 +121,7 @@ lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
+  .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
   .settings(dockerSettings)
