@@ -2,7 +2,7 @@ package org.eigengo.rsa.ingest.v100
 
 import java.util.UUID
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
 import akka.stream.ActorMaterializer
@@ -28,6 +28,11 @@ class SimplifiedTweetProcessorActor(producerConf: KafkaProducer.Conf[String, Env
   private[this] val producer = KafkaProducer(conf = producerConf)
   implicit val _ = ActorMaterializer()
 
+  import scala.concurrent.duration._
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10.seconds) {
+    case _ ⇒ SupervisorStrategy.Restart
+  }
+
   override def receive: Receive = {
     case TweetImage(handle, content) ⇒
       producer.send(KafkaProducerRecord("tweet-image", handle,
@@ -40,7 +45,6 @@ class SimplifiedTweetProcessorActor(producerConf: KafkaProducer.Conf[String, Env
     case SimplifiedTweet(handle, mediaUrls) ⇒
       mediaUrls.foreach { mediaUrl ⇒
         import context.dispatcher
-        import scala.concurrent.duration._
         val request = HttpRequest(method = HttpMethods.GET, uri = Uri(mediaUrl))
         val timeout = 1000.millis
         Http(context.system).singleRequest(request).flatMap(_.entity.toStrict(timeout)).foreach { entity ⇒
