@@ -124,7 +124,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           faceExtractor.extract(is).foreach { result ⇒
-            persistAll(result)(fi ⇒ self ! IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap))
+            persistAll(result.map(fi ⇒ IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap)))(self.!)
           }
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
