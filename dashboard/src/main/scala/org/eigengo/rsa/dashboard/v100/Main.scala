@@ -18,7 +18,6 @@
  */
 package org.eigengo.rsa.dashboard.v100
 
-import akka.actor.Actor.Receive
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
@@ -26,7 +25,6 @@ import akka.stream.ActorMaterializer
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.Request
 import akka.stream.scaladsl.Source
-import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.{ConfigFactory, ConfigResolveOptions}
 
 object Main extends App with DashboardService {
