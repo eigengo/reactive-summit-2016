@@ -129,10 +129,13 @@ lazy val ingest = project.in(file("ingest"))
   .settings(protobufSettings(Seq(protocol)))
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
+    libraryDependencies += Dependencies.akka.persistence,
+    libraryDependencies += Dependencies.akka.persistenceCassandra,
     libraryDependencies += Dependencies.akka.http.core,
     libraryDependencies += Dependencies.akka.http.experimental,
     libraryDependencies += Dependencies.scalapb.json4s,
-    libraryDependencies += Dependencies.koauth
+    libraryDependencies += Dependencies.koauth,
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
 lazy val `fat-it` = project.in(file("fat-it"))

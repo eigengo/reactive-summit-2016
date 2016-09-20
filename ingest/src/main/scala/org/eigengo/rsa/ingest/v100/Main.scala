@@ -10,6 +10,8 @@ import com.hunorkovacs.koauth.domain.KoauthRequest
 import com.hunorkovacs.koauth.service.consumer.DefaultConsumerService
 import com.typesafe.config.ConfigFactory
 
+import scala.util.{Failure, Success, Try}
+
 object Main extends App {
   val config = ConfigFactory.load("ingest.conf").resolve()
 
@@ -23,7 +25,9 @@ object Main extends App {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
-  def run(source: Uri, body: String)(authorizationHeader: HttpHeader): Unit = {
+  val simplifiedTweetProcessorActor = system.actorOf(SimplifiedTweetProcessorActor.props(config.getConfig("app")))
+
+  def ingest(source: Uri, body: String)(authorizationHeader: HttpHeader): Unit = {
     val httpRequest = HttpRequest(
       method = HttpMethods.POST,
       uri = source,
@@ -36,17 +40,21 @@ object Main extends App {
         response.entity.dataBytes
           .scan("")((acc, curr) => if (acc.contains("\r\n")) curr.utf8String else acc + curr.utf8String)
           .filter(_.contains("\r\n"))
-
-          //.map(json => Try(parse(json).extract[Tweet]))
-          .runForeach(println)
+          .map(json ⇒ SimplifiedTweetFormat.parse(json))
+          .runForeach {
+            case Success(tweet) ⇒
+              simplifiedTweetProcessorActor ! tweet
+            case Failure(ex) ⇒
+              system.log.warning("Could not process tweet: {}.", ex)
+          }
       }
     }
   }
 
   val consumer = new DefaultConsumerService(system.dispatcher)
 
-  //val body = "track=%23ReactiveSummit"
-  val body = "track=New%20York"
+  val body = "track=%23ReactiveSummit"
+//  val body = "track=New%20York"
   val source = Uri(url)
 
   val koauthRequest = KoauthRequest(method = "POST", url = url, authorizationHeader = None, body = Some(body))
@@ -55,6 +63,6 @@ object Main extends App {
       val ParsingResult.Ok(h, _) = HttpHeader.parse("Authorization", x.header)
       h
     }
-    .foreach(run(source, body))
+    .foreach(ingest(source, body))
 
 }
