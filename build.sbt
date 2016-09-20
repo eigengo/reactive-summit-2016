@@ -138,7 +138,7 @@ lazy val ingest = project.in(file("ingest"))
 lazy val `fat-it` = project.in(file("fat-it"))
   .settings(commonSettings)
   .settings(deeplearning4jSettings)
-  .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it)
+  .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it, ingest)
 
 lazy val deeplearning4jSettings = Seq(
   classpathTypes += "maven-plugin",

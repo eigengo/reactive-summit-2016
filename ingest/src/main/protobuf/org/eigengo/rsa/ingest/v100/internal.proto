@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package org.eigengo.rsa.ingest.v100;
+
+message SimplifiedTweet {
+    User user = 1;
+    Entities entities = 2;
+
+    message User {
+        string screen_name = 1;
+        string description = 2;
+    }
+
+    message Entities {
+
+        repeated Media media = 1;
+
+        message Media {
+            string media_url = 1;
+        }
+
+    }
+}
