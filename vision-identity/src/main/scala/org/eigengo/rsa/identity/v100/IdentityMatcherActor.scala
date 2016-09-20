@@ -102,16 +102,18 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   def handleIdentifyFace: Receive = {
-    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmap) ⇒
-      identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
-        val out = Envelope(version = 100,
-          processingTimestamp = System.nanoTime(),
-          ingestionTimestamp = ingestionTimestamp,
-          correlationId = correlationId,
-          messageId = UUID.randomUUID().toString,
-          messageType = "identity",
-          payload = ByteString.copyFrom(identity.toByteArray))
-        producer.send(KafkaProducerRecord("identity", handle, out))
+    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmaps) ⇒
+      faceRGBBitmaps.foreach { faceRGBBitmap ⇒
+        identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
+          val out = Envelope(version = 100,
+            processingTimestamp = System.nanoTime(),
+            ingestionTimestamp = ingestionTimestamp,
+            correlationId = correlationId,
+            messageId = UUID.randomUUID().toString,
+            messageType = "identity",
+            payload = ByteString.copyFrom(identity.toByteArray))
+          producer.send(KafkaProducerRecord("identity", handle, out))
+        }
       }
   }
 
@@ -119,15 +121,17 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
 
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
-      consumerRecords.pairs.foreach {
-        case (None, _) ⇒
+      val faces = consumerRecords.pairs.flatMap {
+        case (None, _) ⇒ None
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
-          faceExtractor.extract(is).foreach { result ⇒
-            persistAll(result.map(fi ⇒ IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, fi.rgbBitmap)))(self.!)
-          }
+          faceExtractor.extract(is).map(x ⇒ IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, x.map(_.rgbBitmap))).toOption
       }
-      kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+
+      persist(faces.reduce((x, y) ⇒ x.copy(rgbBitmaps = x.rgbBitmaps ++ y.rgbBitmaps))) { result ⇒
+        self ! result
+        kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+      }
   }
 
 }

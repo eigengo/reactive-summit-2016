@@ -7,7 +7,7 @@ message IdentifyFace {
     int64 ingestionTimestamp = 2;
     string correlationId = 3;
     string hanlde = 4;
-    bytes rgbBitmap = 5;
+    repeated bytes rgbBitmaps = 5;
 }
 
 message FaceImage {

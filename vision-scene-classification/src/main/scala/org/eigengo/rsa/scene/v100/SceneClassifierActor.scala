@@ -32,6 +32,7 @@ import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializ
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
+import scala.concurrent.Future
 import scala.util.Success
 
 object SceneClassifierActor {
@@ -89,11 +90,11 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
 
   override def receive: Receive = {
     case extractor(consumerRecords) ⇒
-      consumerRecords.pairs.foreach {
-        case (None, _) ⇒
+      val futures = consumerRecords.pairs.flatMap {
+        case (None, _) ⇒ None
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
-          sceneClassifier.classify(is).foreach { scene ⇒
+          sceneClassifier.classify(is).map { scene ⇒
             val out = Envelope(version = 100,
               processingTimestamp = System.nanoTime(),
               ingestionTimestamp = envelope.ingestionTimestamp,
@@ -103,9 +104,12 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
               payload = ByteString.copyFrom(scene.toByteArray))
 
             producer.send(KafkaProducerRecord("scene", handle, out))
-          }
+          }.toOption
       }
-      kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+      import context.dispatcher
+      Future.sequence(futures).onComplete { _ ⇒
+        kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+      }
   }
 
 }
