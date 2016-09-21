@@ -33,7 +33,7 @@ import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializ
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 object IdentityMatcherActor {
 
@@ -102,17 +102,21 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   def handleIdentifyFace: Receive = {
-    case IdentifyFace(100, ingestionTimestamp, correlationId, handle, faceRGBBitmaps) ⇒
-      faceRGBBitmaps.foreach { faceRGBBitmap ⇒
-        identityMatcher.identify(faceRGBBitmap.newInput()).foreach { identity ⇒
-          val out = Envelope(version = 100,
-            processingTimestamp = System.nanoTime(),
-            ingestionTimestamp = ingestionTimestamp,
-            correlationId = correlationId,
-            messageId = UUID.randomUUID().toString,
-            messageType = "identity",
-            payload = ByteString.copyFrom(identity.toByteArray))
-          producer.send(KafkaProducerRecord("identity", handle, out))
+    case IdentifyFaces(faces) ⇒
+      faces.foreach { identifyFace ⇒
+
+        identityMatcher.identify(identifyFace.rgbBitmap.newInput()) match {
+          case Success(identity) ⇒
+            val out = Envelope(version = 100,
+              processingTimestamp = System.nanoTime(),
+              ingestionTimestamp = identifyFace.ingestionTimestamp,
+              correlationId = identifyFace.correlationId,
+              messageId = UUID.randomUUID().toString,
+              messageType = "identity",
+              payload = ByteString.copyFrom(identity.toByteArray))
+            producer.send(KafkaProducerRecord("identity", identifyFace.handle, out))
+          case Failure(ex) ⇒
+            context.system.log.error("Could not identify faces {}", ex)
         }
       }
   }
@@ -122,13 +126,19 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
       val faces = consumerRecords.pairs.flatMap {
-        case (None, _) ⇒ None
+        case (None, _) ⇒ Nil
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
-          faceExtractor.extract(is).map(x ⇒ IdentifyFace(100, envelope.ingestionTimestamp, envelope.correlationId, handle, x.map(_.rgbBitmap))).toOption
+          faceExtractor.extract(is) match {
+            case Success(faceImages) ⇒
+              faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
+            case Failure(ex) ⇒
+              context.system.log.error("Could not extract faces {}", ex)
+              Nil
+          }
       }
 
-      persist(faces.reduce((x, y) ⇒ x.copy(rgbBitmaps = x.rgbBitmaps ++ y.rgbBitmaps))) { result ⇒
+      persist(IdentifyFaces(faces)) { result ⇒
         self ! result
         kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
