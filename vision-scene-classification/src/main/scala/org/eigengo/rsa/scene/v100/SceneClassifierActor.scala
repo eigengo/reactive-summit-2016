@@ -107,8 +107,8 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           }.toOption
       }
       import context.dispatcher
-      Future.sequence(futures).onComplete { _ ⇒
-        kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+      Future.sequence(futures).onSuccess {
+        case _ ⇒ kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }
 
