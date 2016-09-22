@@ -24,9 +24,9 @@ import java.util.UUID
 import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy}
 import akka.persistence.{AtLeastOnceDelivery, PersistentActor}
 import akka.routing.RandomPool
+import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import cakesolutions.kafka._
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
@@ -34,7 +34,7 @@ import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 object IdentityMatcherActor {
 
@@ -104,7 +104,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   def handleIdentifyFace: Receive = {
-    case IdentifyFaces(faces) ⇒
+    case IdentifyFaces(deliveryId, faces) ⇒
       val sentFutures = faces.map { identifyFace ⇒
         val identity = identityMatcher.identify(identifyFace.rgbBitmap.newInput())
         val out = Envelope(version = 100,
@@ -116,16 +116,17 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           payload = ByteString.copyFrom(identity.toByteArray))
           producer.send(KafkaProducerRecord("identity", identifyFace.handle, out))
         }
-        Future.sequence(sentFutures).onSuccess {
-          case _ ⇒ confirmDelivery(0L)
-        }
+      if (deliveryId != 0) {
+        import context.dispatcher
+        Future.sequence(sentFutures).onSuccess { case _ ⇒ confirmDelivery(deliveryId) }
+      }
   }
 
   override def receiveRecover: Receive = handleIdentifyFace
 
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
-      val faces = consumerRecords.pairs.flatMap {
+      val identifyFaces = consumerRecords.pairs.flatMap {
         case (None, _) ⇒ Nil
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
@@ -133,8 +134,8 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
       }
 
-      persist(IdentifyFaces(faces)) { result ⇒
-        self ! result
+      persist(IdentifyFaces(identifyFaces = identifyFaces)) { result ⇒
+        deliver(self.path)(deliveryId ⇒ result.copy(deliveryId = deliveryId))
         kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }

@@ -10,7 +10,8 @@ message IdentifyFace {
 }
 
 message IdentifyFaces {
-    repeated IdentifyFace identifyFaces = 1;
+    int64 deliveryId = 1;
+    repeated IdentifyFace identifyFaces = 2;
 }
 
 message FaceImage {
