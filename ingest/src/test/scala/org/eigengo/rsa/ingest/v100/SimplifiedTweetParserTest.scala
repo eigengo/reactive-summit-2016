@@ -12,8 +12,9 @@ class SimplifiedTweetParserTest extends FlatSpec with PropertyChecks with Matche
     val json = Source.fromInputStream(getClass.getResourceAsStream("/testing.json")).getLines().mkString
     val Success(simplifiedTweet) = SimplifiedTweetFormat.parse(json)
     simplifiedTweet.handle shouldBe "honzam399"
-    simplifiedTweet.mediaUrls.length shouldBe 1
+    simplifiedTweet.mediaUrls.length shouldBe 2
     simplifiedTweet.mediaUrls should contain ("http://pbs.twimg.com/media/Cso-f3PWgAApURT.jpg")
+    simplifiedTweet.mediaUrls should contain ("http://pbs.twimg.com/media/Dso-f3PWgAApURT.jpg")
   }
 
 }
