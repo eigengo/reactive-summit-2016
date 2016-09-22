@@ -22,7 +22,7 @@ import java.io.ByteArrayInputStream
 import java.util.UUID
 
 import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy}
-import akka.persistence.PersistentActor
+import akka.persistence.{PersistentActor, AtLeastOnceDelivery}
 import akka.routing.RandomPool
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -76,7 +76,8 @@ object IdentityMatcherActor {
 
 class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf,
                            producerConf: KafkaProducer.Conf[String, Envelope],
-                           faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher) extends PersistentActor {
+                           faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher)
+  extends PersistentActor with AtLeastOnceDelivery {
 
   import IdentityMatcherActor._
 
@@ -137,7 +138,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
               Nil
           }
       }
-
+      
       persist(IdentifyFaces(faces)) { result ⇒
         self ! result
         kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
