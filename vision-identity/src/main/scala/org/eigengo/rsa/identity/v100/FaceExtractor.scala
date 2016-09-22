@@ -26,8 +26,7 @@ import scala.util.{Success, Try}
 
 class FaceExtractor(acceptor: FaceImage ⇒ Boolean) {
 
-  def extract(imageStream: InputStream): Try[List[FaceImage]] = Success(List(
-    FaceImage(1.0, 0, 0, 100, 100, ByteString.EMPTY)
-  ))
+  def extract(imageStream: InputStream): List[FaceImage] =
+    List(FaceImage(1.0, 0, 0, 100, 100, ByteString.EMPTY))
 
 }

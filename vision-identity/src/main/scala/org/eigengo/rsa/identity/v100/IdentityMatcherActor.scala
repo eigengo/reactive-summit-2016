@@ -21,19 +21,20 @@ package org.eigengo.rsa.identity.v100
 import java.io.ByteArrayInputStream
 import java.util.UUID
 
-import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy}
-import akka.persistence.{PersistentActor, AtLeastOnceDelivery}
+import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy, Kill}
+import akka.persistence.{AtLeastOnceDelivery, PersistentActor}
 import akka.routing.RandomPool
+import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import cakesolutions.kafka._
 import com.google.protobuf.ByteString
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 object IdentityMatcherActor {
 
@@ -102,45 +103,44 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
     kafkaConsumerActor ! Unsubscribe
   }
 
-  def handleIdentifyFace: Receive = {
-    case IdentifyFaces(faces) ⇒
-      faces.foreach { identifyFace ⇒
+  def identifyFacesAndSend(identifyFaces: Seq[IdentifyFace])(implicit executor: ExecutionContext): Future[Unit] = {
+    val sentFutures = identifyFaces.map { identifyFace ⇒
+      val identity = identityMatcher.identify(identifyFace.rgbBitmap.newInput())
+      val out = Envelope(version = 100,
+        processingTimestamp = System.nanoTime(),
+        ingestionTimestamp = identifyFace.ingestionTimestamp,
+        correlationId = identifyFace.correlationId,
+        messageId = UUID.randomUUID().toString,
+        messageType = "identity",
+        payload = ByteString.copyFrom(identity.toByteArray))
+      producer.send(KafkaProducerRecord("identity", identifyFace.handle, out)).map(_ ⇒ Unit)
+    }
+    Future.sequence(sentFutures).map(_ ⇒ Unit)
+  }
 
-        identityMatcher.identify(identifyFace.rgbBitmap.newInput()) match {
-          case Success(identity) ⇒
-            val out = Envelope(version = 100,
-              processingTimestamp = System.nanoTime(),
-              ingestionTimestamp = identifyFace.ingestionTimestamp,
-              correlationId = identifyFace.correlationId,
-              messageId = UUID.randomUUID().toString,
-              messageType = "identity",
-              payload = ByteString.copyFrom(identity.toByteArray))
-            producer.send(KafkaProducerRecord("identity", identifyFace.handle, out))
-          case Failure(ex) ⇒
-            context.system.log.error("Could not identify faces {}", ex)
-        }
-      }
+  def handleIdentifyFace: Receive = {
+    case (deliveryId: Long, identifyFaces: IdentifyFaces) ⇒
+      import context.dispatcher
+      identifyFacesAndSend(identifyFaces.identifyFaces).onSuccess { case _ ⇒ confirmDelivery(deliveryId) }
+    case IdentifyFaces(faces) ⇒
+      import context.dispatcher
+      identifyFacesAndSend(faces).onFailure { case _ ⇒ self ! Kill }
   }
 
   override def receiveRecover: Receive = handleIdentifyFace
 
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
-      val faces = consumerRecords.pairs.flatMap {
+      val identifyFaces = consumerRecords.pairs.flatMap {
         case (None, _) ⇒ Nil
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
-          faceExtractor.extract(is) match {
-            case Success(faceImages) ⇒
-              faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
-            case Failure(ex) ⇒
-              context.system.log.error("Could not extract faces {}", ex)
-              Nil
-          }
+          val faceImages = faceExtractor.extract(is)
+          faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
       }
-      
-      persist(IdentifyFaces(faces)) { result ⇒
-        self ! result
+
+      persist(IdentifyFaces(identifyFaces = identifyFaces)) { result ⇒
+        deliver(self.path)(deliveryId ⇒ (deliveryId, result))
         kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
       }
   }

@@ -28,8 +28,8 @@ import scala.util.{Success, Try}
 
 class IdentityMatcher private(network: MultiLayerNetwork, labels: List[String]) {
 
-  def identify(imageStream: InputStream): Try[Identity] = {
-    Success(Identity(identifiedFaces = Seq(Identity.IdentifiedFace(name = "Jamie Allen", score = 0.93))))
+  def identify(imageStream: InputStream): Identity = {
+    Identity(identifiedFaces = Seq(Identity.IdentifiedFace(name = "Jamie Allen", score = 0.93)))
   }
 
 }
