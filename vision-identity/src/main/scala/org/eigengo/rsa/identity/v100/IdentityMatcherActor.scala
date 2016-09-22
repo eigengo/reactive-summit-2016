@@ -22,7 +22,7 @@ import java.io.ByteArrayInputStream
 import java.util.UUID
 
 import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy}
-import akka.persistence.{PersistentActor, AtLeastOnceDelivery}
+import akka.persistence.{AtLeastOnceDelivery, PersistentActor}
 import akka.routing.RandomPool
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -33,6 +33,7 @@ import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializ
 import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object IdentityMatcherActor {
@@ -104,22 +105,20 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
 
   def handleIdentifyFace: Receive = {
     case IdentifyFaces(faces) ⇒
-      faces.foreach { identifyFace ⇒
-
-        identityMatcher.identify(identifyFace.rgbBitmap.newInput()) match {
-          case Success(identity) ⇒
-            val out = Envelope(version = 100,
-              processingTimestamp = System.nanoTime(),
-              ingestionTimestamp = identifyFace.ingestionTimestamp,
-              correlationId = identifyFace.correlationId,
-              messageId = UUID.randomUUID().toString,
-              messageType = "identity",
-              payload = ByteString.copyFrom(identity.toByteArray))
-            producer.send(KafkaProducerRecord("identity", identifyFace.handle, out))
-          case Failure(ex) ⇒
-            context.system.log.error("Could not identify faces {}", ex)
+      val sentFutures = faces.map { identifyFace ⇒
+        val identity = identityMatcher.identify(identifyFace.rgbBitmap.newInput())
+        val out = Envelope(version = 100,
+          processingTimestamp = System.nanoTime(),
+          ingestionTimestamp = identifyFace.ingestionTimestamp,
+          correlationId = identifyFace.correlationId,
+          messageId = UUID.randomUUID().toString,
+          messageType = "identity",
+          payload = ByteString.copyFrom(identity.toByteArray))
+          producer.send(KafkaProducerRecord("identity", identifyFace.handle, out))
         }
-      }
+        Future.sequence(sentFutures).onSuccess {
+          case _ ⇒ confirmDelivery(0L)
+        }
   }
 
   override def receiveRecover: Receive = handleIdentifyFace
@@ -130,15 +129,10 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
         case (None, _) ⇒ Nil
         case (Some(handle), envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
-          faceExtractor.extract(is) match {
-            case Success(faceImages) ⇒
-              faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
-            case Failure(ex) ⇒
-              context.system.log.error("Could not extract faces {}", ex)
-              Nil
-          }
+          val faceImages = faceExtractor.extract(is)
+          faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
       }
-      
+
       persist(IdentifyFaces(faces)) { result ⇒
         self ! result
         kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
