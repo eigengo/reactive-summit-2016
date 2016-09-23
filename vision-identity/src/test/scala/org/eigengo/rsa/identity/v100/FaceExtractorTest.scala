@@ -18,23 +18,35 @@
  */
 package org.eigengo.rsa.identity.v100
 
-import java.io.FileOutputStream
-
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
 
-class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers {
+class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers with Inside {
   def getResourceBytes(resourceName: String): Array[Byte] = {
     val is = getClass.getResourceAsStream(resourceName)
     Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
   }
 
   it should "find faces in image" in {
-    println(FaceExtractor().extract(getResourceBytes("/dogface.jpg")))
-    val x = FaceExtractor().extract(getResourceBytes("/verified.jpg")).head
-    new FileOutputStream("/Users/janmachacek/Desktop/x.jpg").write(x.rgbBitmap.toByteArray)
-    val y = FaceExtractor().extract(getResourceBytes("/impostor.jpg")).head
-    new FileOutputStream("/Users/janmachacek/Desktop/y.jpg").write(y.rgbBitmap.toByteArray)
+    FaceExtractor().extract(getResourceBytes("/dogface.jpg")) shouldBe empty
+
+    inside(FaceExtractor().extract(getResourceBytes("/verified.jpg"))) {
+      case FaceImage(_, x, y, w, h, _)::Nil ⇒
+        x should be > 60
+        y should be > 30
+        w should be > 100
+        h should be > 100
+      case _ ⇒ fail()
+    }
+
+    inside(FaceExtractor().extract(getResourceBytes("/impostor.jpg"))) {
+      case FaceImage(_, x, y, w, h, _)::Nil ⇒
+        x should be > 65
+        y should be > 45
+        w should be > 180
+        h should be > 180
+      case _ ⇒ fail()
+    }
   }
 
 }
