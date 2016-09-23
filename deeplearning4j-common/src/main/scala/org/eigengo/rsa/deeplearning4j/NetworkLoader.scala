@@ -119,22 +119,5 @@ object NetworkLoader {
     } yield initializeNetwork(configuration, params)
 
   }
-//
-//  /**
-//    * Constructs the ``MultiLayerNetwork`` from two files
-//    * at the given ``basePath``. The three files are
-//    *
-//    * - the network configuration in ``basePath.json``
-//    * - the network parameters in ``basePath.bin``
-//    *
-//    * @param basePath the base path
-//    * @return error or loaded & initialized ``MultiLayerNetwork``
-//    */
-//  def loadMultiLayerNetwork(basePath: String): Try[MultiLayerNetwork] = {
-//    loadMultiLayerNetwork {
-//        case "config" ⇒ Try(new FileInputStream(s"$basePath.json"))
-//        case "params" ⇒ Try(new FileInputStream(s"$basePath.bin"))
-//    }
-//  }
 
 }

@@ -26,7 +26,7 @@ object Dependencies {
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
-    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" excludeAll ExclusionRule()
+    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" intransitive()//  excludeAll ExclusionRule()
 
     val testKit = "com.typesafe.akka" %% "akka-testkit" % version
     val persistenceInMemory = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.3.8"

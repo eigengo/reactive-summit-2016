@@ -25,10 +25,26 @@ import org.bytedeco.javacpp.opencv_objdetect._
 import org.bytedeco.javacpp.opencv_imgproc._
 import org.bytedeco.javacpp.opencv_imgcodecs._
 
+import scala.util.Try
+
+/**
+  * Performs the face extraction from a given image using a cascade classifier
+  * @param faceCascade the cascade classifier
+  */
 class FaceExtractor private (faceCascade: CascadeClassifier) {
 
-  def extract(image: Array[Byte]): List[FaceImage] = {
+  /**
+    * Extracts the faces in an encoding of an image `image`. Returns a Try of a
+    * decoding or image manipulation error or a list of detected faces
+    *
+    * @param image the image
+    * @return the error or detected faces, each with its coordinates in the original image and the extracted B&W image
+    */
+  def extract(image: Array[Byte]): Try[List[FaceImage]] = Try {
     val mat = imdecode(new Mat(image, false), CV_LOAD_IMAGE_COLOR)
+    if (mat.cols() == 0 || mat.rows() == 0) {
+      throw new IllegalArgumentException("The image is 0 width or 0 height")
+    }
     val grayMat = new Mat()
     cvtColor(mat, grayMat, COLOR_BGRA2GRAY)
     equalizeHist(grayMat, grayMat)
@@ -48,9 +64,16 @@ class FaceExtractor private (faceCascade: CascadeClassifier) {
 
 }
 
+/**
+  * Constructs the face extractor
+  */
 object FaceExtractor {
 
-  def apply(): FaceExtractor = {
+  /**
+    * Construct the classifier and return a valid instance
+    * @return the FaceExtractor instance
+    */
+  def apply(): Try[FaceExtractor] = Try {
     val file = FaceExtractor.getClass.getResource("/haarcascade_frontalface_default.xml").getFile
     new FaceExtractor(new CascadeClassifier(file))
   }

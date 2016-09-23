@@ -21,16 +21,25 @@ package org.eigengo.rsa.identity.v100
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
+import scala.util.Success
+
 class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers with Inside {
+  lazy val Success(faceExtractor) = FaceExtractor()
+
   def getResourceBytes(resourceName: String): Array[Byte] = {
     val is = getClass.getResourceAsStream(resourceName)
     Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
   }
 
-  it should "find faces in image" in {
-    FaceExtractor().extract(getResourceBytes("/dogface.jpg")) shouldBe empty
+  it should "indicate failures" in {
+    faceExtractor.extract(Array(1: Byte)).isFailure shouldBe true
+    faceExtractor.extract(null).isFailure shouldBe true
+  }
 
-    inside(FaceExtractor().extract(getResourceBytes("/verified.jpg"))) {
+  it should "find faces in image" in {
+    faceExtractor.extract(getResourceBytes("/dogface.jpg")).get shouldBe empty
+
+    inside(faceExtractor.extract(getResourceBytes("/verified.jpg")).get) {
       case FaceImage(_, x, y, w, h, _)::Nil ⇒
         x should be > 60
         y should be > 30
@@ -39,7 +48,7 @@ class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers with 
       case _ ⇒ fail()
     }
 
-    inside(FaceExtractor().extract(getResourceBytes("/impostor.jpg"))) {
+    inside(faceExtractor.extract(getResourceBytes("/impostor.jpg")).get) {
       case FaceImage(_, x, y, w, h, _)::Nil ⇒
         x should be > 65
         y should be > 45

@@ -18,10 +18,9 @@
  */
 package org.eigengo.rsa.identity.v100
 
-import java.io.ByteArrayInputStream
 import java.util.UUID
 
-import akka.actor.{OneForOneStrategy, Props, SupervisorStrategy, Kill}
+import akka.actor.{Kill, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.persistence.{AtLeastOnceDelivery, PersistentActor}
 import akka.routing.RandomPool
 import cakesolutions.kafka._
@@ -41,7 +40,7 @@ object IdentityMatcherActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(config: Config): Props = {
-    val faceExtractor = FaceExtractor()
+    val Success(faceExtractor) = FaceExtractor()
 
     val Success(identityMatcher) = IdentityMatcher(
       NetworkLoader.fallbackResourceAccessor(
@@ -125,7 +124,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
       val identifyFaces = consumerRecords.pairs.flatMap {
         case (None, _) ⇒ Nil
         case (Some(handle), envelope) ⇒
-          val faceImages = faceExtractor.extract(envelope.payload.toByteArray)
+          val faceImages = faceExtractor.extract(envelope.payload.toByteArray).getOrElse(Nil)
           faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
       }
 
