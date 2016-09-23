@@ -26,7 +26,7 @@ object Dependencies {
 
     val actor = "com.typesafe.akka" %% "akka-actor" % version
     val persistence = "com.typesafe.akka" %% "akka-persistence" % version
-    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" intransitive()
+    val persistenceCassandra = "com.github.krasserm" %% "akka-persistence-cassandra-3x" % "0.6" excludeAll ExclusionRule()
 
     val testKit = "com.typesafe.akka" %% "akka-testkit" % version
     val persistenceInMemory = "com.github.dnvriend" %% "akka-persistence-inmemory" % "1.3.8"
@@ -60,7 +60,10 @@ object Dependencies {
     def native(arch: String = osArchClassifier)  = "org.nd4j" % "nd4j-native" % version classifier "" classifier arch
   }
 
-  val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
+  object bytedeco {
+    val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
+    // val javacv = "org.bytedeco" % "javacv" % "1.2"
+  }
 
   object deeplearning4j {
     private val version = "0.5.0"
@@ -72,10 +75,6 @@ object Dependencies {
     private val version = "3.1.1"
 
     val core = "com.twelvemonkeys.imageio" % "imageio-core" % version
-  }
-
-  object boofcv {
-    val core = "org.boofcv" % "core" % "0.24.1"
   }
 
   val koauth = "com.hunorkovacs" %% "koauth" % "1.1.0"

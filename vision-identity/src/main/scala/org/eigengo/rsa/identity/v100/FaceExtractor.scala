@@ -18,15 +18,41 @@
  */
 package org.eigengo.rsa.identity.v100
 
-import java.io.InputStream
-
 import com.google.protobuf.ByteString
+import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.javacpp.opencv_core._
+import org.bytedeco.javacpp.opencv_objdetect._
+import org.bytedeco.javacpp.opencv_imgproc._
+import org.bytedeco.javacpp.opencv_imgcodecs._
 
-import scala.util.{Success, Try}
+class FaceExtractor private (faceCascade: CascadeClassifier) {
 
-class FaceExtractor(acceptor: FaceImage ⇒ Boolean) {
+  def extract(image: Array[Byte]): List[FaceImage] = {
+    val mat = imdecode(new Mat(image, false), CV_LOAD_IMAGE_COLOR)
+    val grayMat = new Mat()
+    cvtColor(mat, grayMat, COLOR_BGRA2GRAY)
+    equalizeHist(grayMat, grayMat)
+    val faces = new RectVector()
+    faceCascade.detectMultiScale(grayMat, faces)
 
-  def extract(imageStream: InputStream): List[FaceImage] =
-    List(FaceImage(1.0, 0, 0, 100, 100, ByteString.EMPTY))
+    (0 until faces.size().toInt).map { x ⇒
+      val rect = faces.get(x)
+      val submat = new Mat(grayMat, rect)
+      val bp = new BytePointer()
+      imencode(".jpg", submat, bp)
+      val bs = ByteString.copyFrom(bp.getStringBytes)
+
+      FaceImage(confidence = 1.0, x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height(), rgbBitmap = bs)
+    }.toList
+  }
+
+}
+
+object FaceExtractor {
+
+  def apply(): FaceExtractor = {
+    val file = FaceExtractor.getClass.getResource("/haarcascade_frontalface_default.xml").getFile
+    new FaceExtractor(new CascadeClassifier(file))
+  }
 
 }

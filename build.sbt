@@ -151,7 +151,7 @@ lazy val deeplearning4jSettings = Seq(
   libraryDependencies += Dependencies.nd4j.native("linux-x86_64") excludeAll(Dependencies.nd4j.exclusionRules:_*),
   libraryDependencies += Dependencies.deeplearning4j.core,
   libraryDependencies += Dependencies.imageio.core,
-  libraryDependencies += Dependencies.javacpp
+  libraryDependencies += Dependencies.bytedeco.javacpp
 )
 
 lazy val commonSettings = Seq(
