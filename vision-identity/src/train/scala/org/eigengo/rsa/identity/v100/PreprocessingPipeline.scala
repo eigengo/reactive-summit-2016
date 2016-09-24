@@ -55,7 +55,9 @@ class PreprocessingPipeline(sourceDirectory: File, targetDirectory: File,
       }
     }
 
-    Try(preprocess(sourceDirectory, targetDirectory))
+    Try(sourceDirectory.listFiles().flatMap { file ⇒
+      if (file.isDirectory) preprocess(file, targetDirectory) else Nil
+    })
   }
 
 }

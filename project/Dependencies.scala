@@ -62,7 +62,7 @@ object Dependencies {
 
   object bytedeco {
     val javacpp = "org.bytedeco" % "javacpp" % "1.2.2"
-    // val javacv = "org.bytedeco" % "javacv" % "1.2"
+    val javacv = "org.bytedeco" % "javacv" % "1.2"
   }
 
   object deeplearning4j {

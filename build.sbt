@@ -86,7 +86,8 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
     libraryDependencies += Dependencies.akka.persistence,
     libraryDependencies += Dependencies.akka.persistenceCassandra,
     libraryDependencies += Dependencies.scalapb.json4s,
-    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
+    libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient,
+    libraryDependencies += Dependencies.bytedeco.javacv
   ))
 
 lazy val `vision-scene-classification` = project.in(file("vision-scene-classification"))
@@ -157,7 +158,8 @@ lazy val deeplearning4jSettings = Seq(
 )
 
 lazy val localTrainingSettings = Seq(
-  unmanagedSourceDirectories in Compile <+= sourceDirectory(_ / "train" / "scala")
+  unmanagedSourceDirectories in Compile <+= sourceDirectory(_ / "train" / "scala"),
+  unmanagedSourceDirectories in Compile <+= sourceDirectory(_ / "train" / "java")
 )
 
 lazy val commonSettings = Seq(
