@@ -78,6 +78,7 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
+  .settings(localTrainingSettings)
   .settings(protobufSettings(Seq(protocol)))
   .settings(deeplearning4jSettings)
   .settings(Seq(
@@ -98,6 +99,7 @@ lazy val `vision-scene-classification` = project.in(file("vision-scene-classific
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
+  .settings(localTrainingSettings)
   .settings(protobufSettings(Seq(protocol)))
   .settings(deeplearning4jSettings)
   .settings(Seq(
@@ -152,6 +154,10 @@ lazy val deeplearning4jSettings = Seq(
   libraryDependencies += Dependencies.deeplearning4j.core,
   libraryDependencies += Dependencies.imageio.core,
   libraryDependencies += Dependencies.bytedeco.javacpp
+)
+
+lazy val localTrainingSettings = Seq(
+  unmanagedSourceDirectories in Compile <+= sourceDirectory(_ / "train" / "scala")
 )
 
 lazy val commonSettings = Seq(

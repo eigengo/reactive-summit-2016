@@ -20,18 +20,18 @@ package org.eigengo.rsa.identity.v100
 
 import com.google.protobuf.ByteString
 import org.bytedeco.javacpp.BytePointer
-import org.bytedeco.javacpp.opencv_core._
-import org.bytedeco.javacpp.opencv_objdetect._
-import org.bytedeco.javacpp.opencv_imgproc._
-import org.bytedeco.javacpp.opencv_imgcodecs._
 
 import scala.util.Try
+import org.bytedeco.javacpp.opencv_objdetect._
 
 /**
   * Performs the face extraction from a given image using a cascade classifier
   * @param faceCascade the cascade classifier
   */
 class FaceExtractor private (faceCascade: CascadeClassifier) {
+  import org.bytedeco.javacpp.opencv_core._
+  import org.bytedeco.javacpp.opencv_imgproc._
+  import org.bytedeco.javacpp.opencv_imgcodecs._
 
   /**
     * Extracts the faces in an encoding of an image `image`. Returns a Try of a
