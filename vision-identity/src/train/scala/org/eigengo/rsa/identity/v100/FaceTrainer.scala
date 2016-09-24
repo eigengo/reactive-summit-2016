@@ -35,8 +35,11 @@ import org.deeplearning4j.nn.conf.{GradientNormalization, MultiLayerConfiguratio
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.util.NetSaverLoaderUtils
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.lossfunctions.LossFunctions
+
+import scala.util.Try
 
 object FaceTrainer {
   val height = 50
@@ -46,7 +49,7 @@ object FaceTrainer {
   val numLabels = 5
   val batchSize = 20
   val listenerFreq = 1
-  val iterations = 10
+  val iterations = 1
   val epochs = 5
   val splitTrainTest = 0.8
   val nCores = 8
@@ -140,7 +143,7 @@ object FaceTrainer {
     var trainIter: MultipleEpochsIterator = null
 
     // Train
-    for (transform <- transforms) {
+    for (transform <- transforms) Try {
       recordReader.initialize(trainData, transform)
       dataIter = new RecordReaderDataSetIterator(recordReader, batchSize, 1, numLabels)
       trainIter = new MultipleEpochsIterator(epochs, dataIter, nCores)
@@ -154,8 +157,8 @@ object FaceTrainer {
     print(eval.stats(true))
 
     // Save model and parameters
-//    NetSaverLoaderUtils.saveNetworkAndParameters(network, basePath)
-//    NetSaverLoaderUtils.saveUpdators(network, basePath)
+    NetSaverLoaderUtils.saveNetworkAndParameters(network, "/Users/janmachacek/Tmp")
+    NetSaverLoaderUtils.saveUpdators(network, "/Users/janmachacek/Tmp")
 
   }
 
