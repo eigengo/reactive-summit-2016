@@ -18,7 +18,7 @@
  */
 package org.eigengo.rsa.identity.v100
 
-import java.io.File
+import java.io.{File, FileOutputStream}
 import java.util.Random
 
 import org.datavec.api.io.filters.BalancedPathFilter
@@ -49,14 +49,15 @@ object FaceTrainer {
   val numLabels = 5
   val batchSize = 20
   val listenerFreq = 1
-  val iterations = 1
-  val epochs = 5
+  val iterations = 10
+  val epochs = 7
   val splitTrainTest = 0.8
   val nCores = 8
   // num of cores on machine to paralize data load
   val rng = new Random()
 
   def main(args: Array[String]) {
+    System.setProperty("OMP_NUM_THREADS", nCores.toString)
     val mainPath = new File("/Users/janmachacek/Eigengo/reactive-summit-2016-data/faces")
 
     // Define how to filter and load data into batches
@@ -133,7 +134,7 @@ object FaceTrainer {
       .backprop(true).pretrain(false)
       .cnnInputSize(height, width, channels).build()
 
-    val network: MultiLayerNetwork = new MultiLayerNetwork(confTiny)
+    val network = new MultiLayerNetwork(confTiny)
     network.init()
     network.setListeners(new ScoreIterationListener(listenerFreq))
 
@@ -157,6 +158,8 @@ object FaceTrainer {
     print(eval.stats(true))
 
     // Save model and parameters
+    import scala.collection.JavaConversions._
+    new FileOutputStream("/Users/janmachacek/Tmp/labels").write(recordReader.getLabels.mkString("\n").getBytes)
     NetSaverLoaderUtils.saveNetworkAndParameters(network, "/Users/janmachacek/Tmp")
     NetSaverLoaderUtils.saveUpdators(network, "/Users/janmachacek/Tmp")
 

@@ -20,21 +20,37 @@ package org.eigengo.rsa.identity.v100
 
 import java.io.InputStream
 
+import org.datavec.image.loader.ImageLoader
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.eigengo.rsa.deeplearning4j.NetworkLoader
 
 import scala.io.Source
-import scala.util.{Success, Try}
+import scala.util.Try
 
 class IdentityMatcher private(network: MultiLayerNetwork, labels: List[String]) {
+  private val loader = new ImageLoader(50, 50, 3)
+  private val threshold = 0.34
 
-  def identify(imageStream: InputStream): Identity = {
-    Identity(identifiedFaces = Seq(Identity.IdentifiedFace(name = "Jamie Allen", score = 0.93)))
+  def identify(imageStream: InputStream): Option[Identity.IdentifiedFace] = {
+    Try(loader.asRowVector(imageStream)).toOption.flatMap { imageRowVector ⇒
+      val predictions = network.output(imageRowVector)
+      val (i, s) = (0 until predictions.columns()).foldLeft((0, 0.0)) {
+        case (x@(bi, bs), i) ⇒
+          val s = predictions.getDouble(0, i)
+          if (s > bs) (i, s) else x
+      }
+      if (s > threshold) Some(Identity.IdentifiedFace(labels(i), s)) else None
+    }
   }
 
 }
 
 object IdentityMatcher {
+  /**
+    * The network's prediction for a single row vector is not a row vector
+    * (This is never expected to happen)
+    */
+  case object BadPredictionsShape extends Exception("Predictions are not row vector.")
 
   def apply(resourceAccessor: NetworkLoader.ResourceAccessor): Try[IdentityMatcher] = {
     for {

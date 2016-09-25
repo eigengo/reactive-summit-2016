@@ -26,7 +26,7 @@ import scala.util.Success
 
 class IdentityMatcherTest extends FlatSpec with PropertyChecks with Matchers {
 
-  it should "should match people" in {
+  it should "should match known faces" in {
     // Expected to fail
     val Success(identityMatcher) = IdentityMatcher(
       NetworkLoader.fallbackResourceAccessor(
@@ -34,6 +34,10 @@ class IdentityMatcherTest extends FlatSpec with PropertyChecks with Matchers {
         NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/identity")
       )
     )
+
+    val Some(jonas) = identityMatcher.identify(getClass.getResourceAsStream("/jonas boner.jpg"))
+    jonas.name shouldBe "jonas boner"
+    jonas.score should be > 0.3
   }
 
 }

@@ -96,14 +96,15 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   def identifyFacesAndSend(identifyFaces: Seq[IdentifyFace])(implicit executor: ExecutionContext): Future[Unit] = {
     val sentFutures = identifyFaces.map { identifyFace ⇒
       val identity = identityMatcher.identify(identifyFace.rgbBitmap.newInput())
-      val out = Envelope(version = 100,
-        processingTimestamp = System.nanoTime(),
-        ingestionTimestamp = identifyFace.ingestionTimestamp,
-        correlationId = identifyFace.correlationId,
-        messageId = UUID.randomUUID().toString,
-        messageType = "identity",
-        payload = ByteString.copyFrom(identity.toByteArray))
-      producer.send(KafkaProducerRecord("identity", identifyFace.handle, out)).map(_ ⇒ Unit)
+//      val out = Envelope(version = 100,
+//        processingTimestamp = System.nanoTime(),
+//        ingestionTimestamp = identifyFace.ingestionTimestamp,
+//        correlationId = identifyFace.correlationId,
+//        messageId = UUID.randomUUID().toString,
+//        messageType = "identity",
+//        payload = ByteString.copyFrom(identity.toByteArray))
+//      producer.send(KafkaProducerRecord("identity", identifyFace.handle, out)).map(_ ⇒ Unit)
+      Future.successful(Unit)
     }
     Future.sequence(sentFutures).map(_ ⇒ Unit)
   }
