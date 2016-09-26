@@ -60,7 +60,7 @@ object IdentityMatcherActor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[IdentityMatcherActorM], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[IdentityMatcherActorM], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher)
   }
 
 }
@@ -150,6 +150,8 @@ class IdentityMatcherActor(producerConf: KafkaProducer.Conf[String, Envelope],
         deliver(self.path)(deliveryId ⇒ (deliveryId, result))
         sender() ! Confirm(consumerRecords.offsets, commit = true)
       }
+    case KafkaConsumerActor.BackingOff(_) ⇒
+      context.system.log.warning("Backing off!")
   }
 
 }
