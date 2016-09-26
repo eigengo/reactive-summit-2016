@@ -59,7 +59,11 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         .get(classOf[Identity])
         .map(_.asInstanceOf[List[Identity]])
         .map(_.foldLeft((List.empty[Identity.IdentifiedFace], List.empty[Identity.UnknownFace])) {
-          case ((i, u), f) ⇒ ((i ++ f.identifiedFaces).distinct, (u ++ f.unknownFaces).distinct)
+          case ((i, u), f) ⇒ f.face match {
+            case Identity.Face.IdentifiedFace(value) ⇒ ((value :: i).distinct, u)
+            case Identity.Face.UnknownFace(value) ⇒ (i, (value :: u).distinct)
+            case _ ⇒ (i, u)
+          }
         })
 
       val sceneLabels = groups

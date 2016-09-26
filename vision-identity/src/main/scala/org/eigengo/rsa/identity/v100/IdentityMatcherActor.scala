@@ -45,7 +45,7 @@ object IdentityMatcherActor {
     val Success(identityMatcher) = IdentityMatcher(
       NetworkLoader.fallbackResourceAccessor(
         NetworkLoader.filesystemResourceAccessor("/opt/models/identity"),
-        NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
+        NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/identity")
       )
     )
     val consumerConf = KafkaConsumer.Conf(
@@ -73,12 +73,13 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   import IdentityMatcherActor._
 
   private[this] val kafkaConsumerActor = context.actorOf(
-      KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
-      "KafkaConsumer"
-    )
+    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
+    "KafkaConsumer"
+  )
   private[this] val producer = KafkaProducer(conf = producerConf)
 
   import scala.concurrent.duration._
+
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10.seconds) {
     case _ ⇒ SupervisorStrategy.Restart
   }
@@ -94,18 +95,24 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   def identifyFacesAndSend(identifyFaces: Seq[IdentifyFace])(implicit executor: ExecutionContext): Future[Unit] = {
-    val sentFutures = identifyFaces.map { identifyFace ⇒
-      val identity = identityMatcher.identify(identifyFace.rgbBitmap.newInput())
-//      val out = Envelope(version = 100,
-//        processingTimestamp = System.nanoTime(),
-//        ingestionTimestamp = identifyFace.ingestionTimestamp,
-//        correlationId = identifyFace.correlationId,
-//        messageId = UUID.randomUUID().toString,
-//        messageType = "identity",
-//        payload = ByteString.copyFrom(identity.toByteArray))
-//      producer.send(KafkaProducerRecord("identity", identifyFace.handle, out)).map(_ ⇒ Unit)
-      Future.successful(Unit)
+    val sentFutures = identifyFaces.flatMap { identifyFace ⇒
+      faceExtractor.extract(identifyFace.image.toByteArray).map(_.map { faceImage ⇒
+        val face = identityMatcher.identify(faceImage.rgbBitmap.newInput()) match {
+          case Some(identifiedFace) ⇒ Identity.Face.IdentifiedFace(identifiedFace)
+          case None ⇒ Identity.Face.UnknownFace(Identity.UnknownFace())
+        }
+        val identity = Identity(face = face)
+        val out = Envelope(version = 100,
+          processingTimestamp = System.nanoTime(),
+          ingestionTimestamp = identifyFace.ingestionTimestamp,
+          correlationId = identifyFace.correlationId,
+          messageId = UUID.randomUUID().toString,
+          messageType = "identity",
+          payload = ByteString.copyFrom(identity.toByteArray))
+        producer.send(KafkaProducerRecord("identity", identifyFace.handle, out)).map(_ ⇒ Unit)
+      }).getOrElse(Nil)
     }
+
     Future.sequence(sentFutures).map(_ ⇒ Unit)
   }
 
@@ -123,10 +130,10 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
       val identifyFaces = consumerRecords.pairs.flatMap {
-        case (None, _) ⇒ Nil
+        case (None, _) ⇒
+          None
         case (Some(handle), envelope) ⇒
-          val faceImages = faceExtractor.extract(envelope.payload.toByteArray).getOrElse(Nil)
-          faceImages.map(x ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, x.rgbBitmap))
+          Some(IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, envelope.payload))
       }
 
       persist(IdentifyFaces(identifyFaces = identifyFaces)) { result ⇒

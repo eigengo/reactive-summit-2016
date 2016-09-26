@@ -69,7 +69,7 @@ object Main {
       import scala.concurrent.duration._
       logger.info(Await.result(future, 1.minute).toString())
 
-      Thread.sleep(500)
+      Thread.sleep(1000)
     }
     producer.close()
   }

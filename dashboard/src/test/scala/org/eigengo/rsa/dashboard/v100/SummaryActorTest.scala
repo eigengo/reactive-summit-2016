@@ -20,7 +20,7 @@ package org.eigengo.rsa.dashboard.v100
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, ActorSystem}
 import akka.testkit.{TestActorRef, TestKitBase}
 import com.google.protobuf.ByteString
 import com.trueaccord.scalapb.GeneratedMessage
@@ -38,7 +38,7 @@ class SummaryActorTest extends FlatSpec with TestKitBase with PropertyChecks wit
     system.eventStream.subscribe(lsa, classOf[Summary])
 
     val scene = ("scene", Scene(labels = Seq(Scene.Label(label = "salad", score = 1))))
-    val identity = ("identity", Identity(identifiedFaces = Seq(Identity.IdentifiedFace(name = "Jan", score = 1))))
+    val identity = ("identity", Identity(face = Identity.Face.IdentifiedFace(Identity.IdentifiedFace(name = "Jan", score = 1))))
 
     def envelopeForHandle(ingestionTimestamp: Long, handle: String, m: (String, GeneratedMessage)): TweetEnvelope = {
       val (messageType, message) = m

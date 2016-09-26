@@ -4,15 +4,17 @@ package org.eigengo.rsa.identity.v100;
 
 message Identity {
 
+    oneof face {
+        IdentifiedFace identifiedFace = 1;
+        UnknownFace unknownFace = 2;
+    }
+
     message IdentifiedFace {
         string name = 1;
         double score = 2;
     }
 
     message UnknownFace {
-        double score = 1;
     }
 
-    repeated IdentifiedFace identifiedFaces = 3;
-    repeated UnknownFace unknownFaces = 4;
 }

@@ -48,7 +48,7 @@ class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Ma
     builder.append(pue(ingestionTimestamp = 10.second.toNanos, messageId = "a", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
     builder.append(pue(ingestionTimestamp = 20.second.toNanos, messageId = "b", messageType = "scene", Scene(labels = Seq(Scene.Label("cake", 1.0)))))
     builder.append(pue(ingestionTimestamp = 30.second.toNanos, messageId = "c", messageType = "scene", Scene(labels = Seq(Scene.Label("beer", 1.0)))))
-    builder.append(pue(ingestionTimestamp = 40.second.toNanos, messageId = "d", messageType = "identity", Identity(identifiedFaces = Seq(Identity.IdentifiedFace("Jamie Allen")))))
+    builder.append(pue(ingestionTimestamp = 40.second.toNanos, messageId = "d", messageType = "identity", Identity(face = Identity.Face.IdentifiedFace(Identity.IdentifiedFace("Jamie Allen")))))
     val items = builder.build()
 
     items should have size 1
