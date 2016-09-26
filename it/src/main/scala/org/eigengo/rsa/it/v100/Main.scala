@@ -35,7 +35,7 @@ object Main {
   private val logger = LoggerFactory.getLogger(Main.getClass)
 
   def main(args: Array[String]): Unit = {
-    val handles = (0 until 100).map(x ⇒ s"@$x")
+    val handles = (0 until 50).map(x ⇒ s"@$x")
 
     Option(System.getenv("START_DELAY")).foreach(d ⇒ Thread.sleep(d.toInt))
 

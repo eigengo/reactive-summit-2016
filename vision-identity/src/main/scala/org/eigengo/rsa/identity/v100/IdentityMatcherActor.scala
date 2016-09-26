@@ -20,7 +20,7 @@ package org.eigengo.rsa.identity.v100
 
 import java.util.UUID
 
-import akka.actor.{Kill, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.{Actor, Kill, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.persistence.{AtLeastOnceDelivery, PersistentActor}
 import akka.routing.RandomPool
 import cakesolutions.kafka._
@@ -60,22 +60,40 @@ object IdentityMatcherActor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[IdentityMatcherActor], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[IdentityMatcherActorM], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
   }
 
 }
 
-class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf,
-                           producerConf: KafkaProducer.Conf[String, Envelope],
+class IdentityMatcherActorM(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf,
+                            producerConf: KafkaProducer.Conf[String, Envelope],
+                            faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher) extends Actor {
+
+  private[this] val identityMatcherActor = context.actorOf(
+    Props(classOf[IdentityMatcherActor], producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+  )
+  private[this] val kafkaConsumerActor = context.actorOf(
+    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = identityMatcherActor),
+    "KafkaConsumer"
+  )
+
+  override def preStart(): Unit = {
+    kafkaConsumerActor ! Subscribe.AutoPartition(Seq("tweet-image"))
+  }
+
+  override def postStop(): Unit = {
+    kafkaConsumerActor ! Unsubscribe
+  }
+
+  override def receive: Receive = Actor.ignoringBehavior
+}
+
+class IdentityMatcherActor(producerConf: KafkaProducer.Conf[String, Envelope],
                            faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher)
   extends PersistentActor with AtLeastOnceDelivery {
 
   import IdentityMatcherActor._
 
-  private[this] val kafkaConsumerActor = context.actorOf(
-    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
-    "KafkaConsumer"
-  )
   private[this] val producer = KafkaProducer(conf = producerConf)
 
   import scala.concurrent.duration._
@@ -85,14 +103,6 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   }
 
   override val persistenceId: String = "identity-matcher-actor"
-
-  override def preStart(): Unit = {
-    kafkaConsumerActor ! Subscribe.AutoPartition(Seq("tweet-image"))
-  }
-
-  override def postStop(): Unit = {
-    kafkaConsumerActor ! Unsubscribe
-  }
 
   def identifyFacesAndSend(identifyFaces: Seq[IdentifyFace])(implicit executor: ExecutionContext): Future[Unit] = {
     val sentFutures = identifyFaces.flatMap { identifyFace ⇒
@@ -138,7 +148,7 @@ class IdentityMatcherActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
 
       persist(IdentifyFaces(identifyFaces = identifyFaces)) { result ⇒
         deliver(self.path)(deliveryId ⇒ (deliveryId, result))
-        kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
+        sender() ! Confirm(consumerRecords.offsets, commit = true)
       }
   }
 
