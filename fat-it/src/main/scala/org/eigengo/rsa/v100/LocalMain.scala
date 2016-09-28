@@ -10,7 +10,7 @@ object LocalMain {
     System.setProperty("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
     System.setProperty("CASSANDRA_JOURNAL_CPS", "localhost:9042")
     System.setProperty("CASSANDRA_SNAPSHOT_CPS", "localhost:9042")
-    Source.fromFile(new File(System.getProperty("user.home"), ".env/twitter-rsa2016"))
+    Source.fromFile(new File(System.getProperty("user.home"), ".env/twitter-rsa"))
       .getLines()
       .foreach { line ⇒
         val Array(k, v) = line.split("=")
