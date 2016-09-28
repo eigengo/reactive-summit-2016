@@ -74,7 +74,7 @@ object FaceExtractor {
     * @return the FaceExtractor instance
     */
   def apply(): Try[FaceExtractor] = Try {
-    val file = FaceExtractor.getClass.getResource("/haarcascade_frontalface_default.xml").getFile
+    val file = FaceExtractor.getClass.getResource("/haarcascade_frontalface_alt.xml").getFile
     new FaceExtractor(new CascadeClassifier(file))
   }
 

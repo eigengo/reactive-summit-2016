@@ -23,7 +23,6 @@ import akka.routing.RandomPool
 import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.eigengo.rsa._
@@ -40,7 +39,7 @@ object DashboardSinkActor {
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
 
-    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[DashboardSinkActor], consumerConf, consumerActorConf)
   }
 
 }
@@ -49,8 +48,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
   import DashboardSinkActor._
 
   private[this] val kafkaConsumerActor = context.actorOf(
-    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
-    "KafkaConsumer"
+    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self)
   )
 
   import scala.concurrent.duration._

@@ -13,7 +13,7 @@ object Dependencies {
   val troy = "io.github.cassandra-scala" %% "troy" % "0.0.2"
 
   object cakesolutions {
-    val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.10.0.0"
+    val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.10.0.1-SNAPSHOT"
   }
 
   object scalapb {

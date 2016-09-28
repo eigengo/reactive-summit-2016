@@ -35,9 +35,9 @@ class IdentityMatcher private(network: MultiLayerNetwork, labels: List[String]) 
     Try(loader.asRowVector(imageStream)).toOption.flatMap { imageRowVector ⇒
       val predictions = network.output(imageRowVector)
       val (i, s) = (0 until predictions.columns()).foldLeft((0, 0.0)) {
-        case (x@(bi, bs), i) ⇒
-          val s = predictions.getDouble(0, i)
-          if (s > bs) (i, s) else x
+        case (x@(bi, bs), idx) ⇒
+          val s = predictions.getDouble(0, idx)
+          if (s > bs) (idx, s) else x
       }
       if (s > threshold) Some(Identity.IdentifiedFace(labels(i), s)) else None
     }
