@@ -23,7 +23,6 @@ import akka.routing.RandomPool
 import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
-import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.eigengo.rsa._
