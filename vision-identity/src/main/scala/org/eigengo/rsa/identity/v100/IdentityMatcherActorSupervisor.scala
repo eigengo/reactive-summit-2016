@@ -21,8 +21,8 @@ package org.eigengo.rsa.identity.v100
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RandomPool
 import cakesolutions.kafka._
+import cakesolutions.kafka.akka.KafkaConsumerActor
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Subscribe, Unsubscribe}
-import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
 import com.typesafe.config.Config
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
 import org.eigengo.rsa.Envelope
@@ -33,8 +33,6 @@ import scala.util.Success
 object IdentityMatcherActorSupervisor {
 
   def props(config: Config): Props = {
-    val Success(faceExtractor) = FaceExtractor()
-
     val Success(identityMatcher) = IdentityMatcher(
       NetworkLoader.fallbackResourceAccessor(
         NetworkLoader.filesystemResourceAccessor("/opt/models/identity"),
@@ -53,17 +51,17 @@ object IdentityMatcherActorSupervisor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[IdentityMatcherActorSupervisor], consumerConf, consumerActorConf, producerConf, faceExtractor, identityMatcher)
+    Props(classOf[IdentityMatcherActorSupervisor], consumerConf, consumerActorConf, producerConf, identityMatcher)
   }
 
 }
 
 class IdentityMatcherActorSupervisor(consumerConf: KafkaConsumer.Conf[String, Envelope], consumerActorConf: KafkaConsumerActor.Conf,
                                      producerConf: KafkaProducer.Conf[String, Envelope],
-                                     faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher) extends Actor {
+                                     identityMatcher: IdentityMatcher) extends Actor {
 
   private[this] val identityMatcherActor = context.actorOf(
-    IdentityMatcherActor.props(producerConf, faceExtractor, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
+    IdentityMatcherActor.props(producerConf, identityMatcher).withRouter(RandomPool(nrOfInstances = 10))
   )
   private[this] val kafkaConsumerActor = context.actorOf(
     KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = identityMatcherActor)

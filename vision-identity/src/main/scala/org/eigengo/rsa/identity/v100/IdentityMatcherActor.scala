@@ -11,20 +11,22 @@ import com.google.protobuf.ByteString
 import org.eigengo.rsa.Envelope
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 object IdentityMatcherActor {
   private val extractor = ConsumerRecords.extractor[String, Envelope]
 
   def props(producerConf: KafkaProducer.Conf[String, Envelope],
-            faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher): Props =
-    Props(classOf[IdentityMatcherActor], producerConf, faceExtractor, identityMatcher)
+            identityMatcher: IdentityMatcher): Props =
+    Props(classOf[IdentityMatcherActor], producerConf, identityMatcher)
 
 }
 
 class IdentityMatcherActor(producerConf: KafkaProducer.Conf[String, Envelope],
-                           faceExtractor: FaceExtractor, identityMatcher: IdentityMatcher)
+                           identityMatcher: IdentityMatcher)
   extends PersistentActor with AtLeastOnceDelivery {
   import IdentityMatcherActor._
+  lazy val Success(faceExtractor) = FaceExtractor()
 
   private[this] val producer = KafkaProducer(conf = producerConf)
 

@@ -48,13 +48,18 @@ object Main {
       KafkaSerializer[Envelope](_.toByteArray)
     ))
 
-    val is = getClass.getResourceAsStream("/salad.jpg")
-    val bytes = Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+    val resources =
+      List("/images/beer.jpg", "/images/cake.jpg", "/images/salad.jpg")
+      .map { resource ⇒
+        val is = getClass.getResourceAsStream(resource)
+        Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
+      }
+
 
     while (true) {
       val futures: Seq[Future[RecordMetadata]] =
         Random.shuffle(handles).take(1 + Random.nextInt(4)).flatMap { handle ⇒
-        val payload = ByteString.copyFrom(bytes)
+        val payload = ByteString.copyFrom(resources(Random.nextInt(resources.length)))
         val ret = Try(producer.send(KafkaProducerRecord("tweet-image", handle,
           Envelope(version = 100,
             ingestionTimestamp = System.nanoTime(),
