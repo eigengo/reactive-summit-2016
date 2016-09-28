@@ -49,7 +49,7 @@ object Main {
     ))
 
     val resources =
-      List("/images/beer.jpg", "/images/cake.jpg", "/images/salad.jpg")
+      List("/images/beer.jpg", "/images/cake.jpg", "/images/laptop.png", "/images/salad.jpg")
       .map { resource ⇒
         val is = getClass.getResourceAsStream(resource)
         Stream.continually(is.read).takeWhile(_ != -1).map(_.toByte).toArray
