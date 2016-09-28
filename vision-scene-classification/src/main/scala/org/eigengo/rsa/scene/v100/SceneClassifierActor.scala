@@ -57,7 +57,7 @@ object SceneClassifierActor {
       KafkaSerializer[Envelope](_.toByteArray)
     )
 
-    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, producerConf, sceneClassifier).withRouter(RandomPool(nrOfInstances = 10))
+    Props(classOf[SceneClassifierActor], consumerConf, consumerActorConf, producerConf, sceneClassifier)
   }
 
 }
@@ -68,9 +68,8 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   import SceneClassifierActor._
 
   private[this] val kafkaConsumerActor = context.actorOf(
-      KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self),
-      "KafkaConsumer"
-    )
+    KafkaConsumerActor.props(consumerConf = consumerConf, actorConf = consumerActorConf, downstreamActor = self)
+  )
   private[this] val producer = KafkaProducer(conf = producerConf)
 
   import scala.concurrent.duration._

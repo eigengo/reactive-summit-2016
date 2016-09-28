@@ -30,7 +30,7 @@ object Main {
     val system = ActorSystem(name = "identity-100", config = config)
 
     system.log.info(s"Identity 100 starting...")
-    system.actorOf(IdentityMatcherActor.props(config.getConfig("app")))
+    system.actorOf(IdentityMatcherActorSupervisor.props(config.getConfig("app")))
     system.log.info(s"Identity 100 running.")
   }
 

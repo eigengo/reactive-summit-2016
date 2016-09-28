@@ -36,6 +36,10 @@ class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers with 
     faceExtractor.extract(null).isFailure shouldBe true
   }
 
+  it should "not find Helena in salad" in {
+    faceExtractor.extract(getResourceBytes("/salad.jpg")).get shouldBe empty
+  }
+
   it should "find faces in image" in {
     faceExtractor.extract(getResourceBytes("/dogface.jpg")).get shouldBe empty
 
@@ -52,8 +56,8 @@ class FaceExtractorTest extends FlatSpec with PropertyChecks with Matchers with 
       case FaceImage(_, x, y, w, h, _)::Nil ⇒
         x should be > 65
         y should be > 45
-        w should be > 180
-        h should be > 180
+        w should be > 160
+        h should be > 160
       case _ ⇒ fail()
     }
   }
