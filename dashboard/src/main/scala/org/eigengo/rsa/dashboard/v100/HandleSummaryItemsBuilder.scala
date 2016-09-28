@@ -20,13 +20,25 @@ package org.eigengo.rsa.dashboard.v100
 
 import com.trueaccord.scalapb.GeneratedMessage
 import org.eigengo.rsa.identity.v100.Identity
+import org.eigengo.rsa.identity.v100.Identity.{IdentifiedFace, UnknownFace}
 import org.eigengo.rsa.scene.v100.Scene
 import org.eigengo.rsa.{identity, scene}
+
+import scala.collection.{SortedSet, mutable}
 
 object HandleSummaryItemsBuilder {
   implicit object TweetEnvelopeOrdering extends Ordering[TweetEnvelope] {
     override def compare(x: TweetEnvelope, y: TweetEnvelope): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
   }
+
+  implicit object IdentifiedFaceOrdering extends Ordering[IdentifiedFace] {
+    override def compare(x: IdentifiedFace, y: IdentifiedFace): Int = x.name.compareTo(y.name)
+  }
+
+  implicit object UnknownFaceOrdering extends Ordering[UnknownFace] {
+    override def compare(x: UnknownFace, y: UnknownFace): Int = 1
+  }
+
 }
 
 class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
@@ -58,10 +70,10 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
       val identities = groups
         .get(classOf[Identity])
         .map(_.asInstanceOf[List[Identity]])
-        .map(_.foldLeft((List.empty[Identity.IdentifiedFace], List.empty[Identity.UnknownFace])) {
+        .map(_.foldLeft((SortedSet.empty[Identity.IdentifiedFace], SortedSet.empty[Identity.UnknownFace])) {
           case ((i, u), f) ⇒ f.face match {
-            case Identity.Face.IdentifiedFace(value) ⇒ ((value :: i).distinct, u)
-            case Identity.Face.UnknownFace(value) ⇒ (i, (value :: u).distinct)
+            case Identity.Face.IdentifiedFace(value) ⇒ (i + value, u)
+            case Identity.Face.UnknownFace(value) ⇒ (i, u + value)
             case _ ⇒ (i, u)
           }
         })
@@ -76,7 +88,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
       identities.foreach { case (identifiedFaces, unknownFaces) ⇒
         if (identifiedFaces.nonEmpty || unknownFaces.nonEmpty) sb.append("with")
         if (identifiedFaces.nonEmpty) sb.append(s" the famous ${identifiedFaces.map(_.name).mkString(", ")}")
-        if (unknownFaces.nonEmpty) sb.appendAll(s" ${unknownFaces.length} other people")
+        if (unknownFaces.nonEmpty) sb.appendAll(s" ${unknownFaces.size} other people")
       }
 
       sceneLabels.foreach { labels ⇒
