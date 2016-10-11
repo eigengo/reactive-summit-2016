@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package org.eigengo.rsa.text.v100;
+
+message Text {
+    message Area {
+        string contents = 1;
+        int32 x = 2;
+        int32 y = 3;
+        int32 w = 4;
+        int32 h = 5;
+    }
+    repeated Area areas = 1;
+}

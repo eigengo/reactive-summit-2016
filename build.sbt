@@ -120,6 +120,29 @@ lazy val it = project.in(file("it"))
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
+lazy val `vision-text` = project.in(file("vision-text"))
+  .enablePlugins(LagomJava)
+
+  .dependsOn(protocol % PB.protobufConfig.name)
+  .dependsOn(`protobuf-testkit` % Test)
+  .dependsOn(`linter-plugin` % Compile)
+  .dependsOn(`scalapb-akka-serializer`)
+
+  .settings(commonSettings)
+  .settings(dockerSettings)
+  .settings(serverSettings)
+  .settings(linterSettings)
+  .settings(protobufSettings(Seq(protocol)))
+  .settings(
+    libraryDependencies += lagomJavadslPersistence,
+    libraryDependencies += lagomJavadslPersistenceCassandra,
+    libraryDependencies += lagomJavadslKafkaBroker
+  )
+  .settings(
+    lagomKafkaEnabled in ThisBuild := false,
+    lagomKafkaAddress in ThisBuild := "localhost:9092"
+  )
+
 lazy val ingest = project.in(file("ingest"))
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
