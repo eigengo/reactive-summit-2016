@@ -16,20 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.eigengo.rsa.text.v100;
+package org.eigengo.rsa.text.v100.server;
 
-import com.lightbend.lagom.javadsl.api.Descriptor;
-import com.lightbend.lagom.javadsl.api.Service;
-import com.lightbend.lagom.javadsl.api.broker.Topic;
-import org.eigengo.rsa.Envelope;
+import com.google.inject.AbstractModule;
+import com.lightbend.lagom.javadsl.server.ServiceGuiceSupport;
+import org.eigengo.rsa.text.v100.TextService;
+import org.eigengo.rsa.text.v100.TextServiceImpl;
+import org.eigengo.rsa.text.v100.TweetImageService;
+import org.eigengo.rsa.text.v100.TweetImageServiceImpl;
 
-import static com.lightbend.lagom.javadsl.api.Service.*;
-
-public interface TextService extends Service {
+public class Module extends AbstractModule implements ServiceGuiceSupport {
 
     @Override
-    default Descriptor descriptor() {
-        return named("text");
+    protected void configure() {
+        bindServices(serviceBinding(TweetImageService.class, TweetImageServiceImpl.class), serviceBinding(TextService.class, TextServiceImpl.class));
     }
 
 }
