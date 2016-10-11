@@ -19,34 +19,36 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.Done;
-import akka.NotUsed;
+import akka.actor.Cancellable;
 import akka.japi.Pair;
-import akka.stream.OverflowStrategy;
-import akka.stream.javadsl.*;
+import akka.stream.Materializer;
+import akka.stream.javadsl.Flow;
+import akka.stream.javadsl.Source;
 import com.google.inject.Inject;
 import com.lightbend.lagom.javadsl.api.broker.Topic;
 import com.lightbend.lagom.javadsl.broker.TopicProducer;
+import com.lightbend.lagom.javadsl.persistence.Offset;
 import org.eigengo.rsa.Envelope;
+import scala.concurrent.duration.FiniteDuration;
+
+import java.util.concurrent.TimeUnit;
 
 public class TextServiceImpl implements TextService {
-    final Source<Envelope, SourceQueueWithComplete<Envelope>> source = Source.<Envelope>queue(10, OverflowStrategy.dropTail());
-    final Sink<Envelope, SinkQueueWithCancel<Envelope>> queue = Sink.<Envelope>queue();
-    final Flow<Envelope, Envelope, NotUsed> flow = Flow.fromSinkAndSource(Sink.<Envelope>ignore(), source).map(this::extractText);
-
+    
     @Override
     public Topic<Envelope> textTopic() {
-        return TopicProducer.<Envelope>singleStreamWithOffset(offset -> source.map(e -> new Pair<>(e, offset)));
+        Source<Envelope, Cancellable> src = Source.tick(FiniteDuration.Zero(), FiniteDuration.apply(1000, TimeUnit.MILLISECONDS), Envelope.defaultInstance());
+        return TopicProducer.singleStreamWithOffset(offset -> src.map(e -> new Pair<>(e, offset)));
     }
 
     @Inject
-    public TextServiceImpl(TweetImageService tweetImageService) {
-        tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(flow.map(x -> Done.getInstance()));
+    public TextServiceImpl(Materializer materializer, TweetImageService tweetImageService) {
+        tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(Flow.fromFunction(this::extractText));
     }
 
-    private Envelope extractText(Envelope envelope) {
+    private Done extractText(Envelope envelope) {
         System.out.println("*** find text in " + envelope.messageId());
-
-        return envelope;
+        return Done.getInstance();
     }
 
 }

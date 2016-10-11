@@ -34,7 +34,7 @@ public interface TextService extends Service {
     default Descriptor descriptor() {
         return named("text")
                 .publishing(
-                        topic("tweet-image", this::textTopic).withMessageSerializer(ScalaPBMessageSerializer.of(Envelope.messageCompanion()))
+                        topic("text", this::textTopic).withMessageSerializer(ScalaPBMessageSerializer.of(Envelope.messageCompanion()))
                 );
     }
 

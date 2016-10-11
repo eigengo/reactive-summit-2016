@@ -14,15 +14,16 @@ public class TweetImageServiceImpl implements TweetImageService {
     @Inject
     public TweetImageServiceImpl(PersistentEntityRegistry persistentEntityRegistry) {
         this.persistentEntityRegistry = persistentEntityRegistry;
+
     }
 
-    private Pair<Envelope, Offset> convertEvent(Pair<E, Offset> pair) {
+    private Pair<Envelope, Offset> convertEvent(Pair<TweetImageEvent, Offset> pair) {
         return new Pair<>(pair.first().getEnvelope(), pair.second());
     }
 
     public Topic<Envelope> tweetImageTopic() {
-        return TopicProducer.singleStreamWithOffset(offset -> persistentEntityRegistry
-                .eventStream(ETag.INSTANCE, offset)
+        return TopicProducer.singleStreamWithOffset(offset ->
+                persistentEntityRegistry.eventStream(TweetImageEventTag.INSTANCE, offset)
                 .map(this::convertEvent));
     }
 }
