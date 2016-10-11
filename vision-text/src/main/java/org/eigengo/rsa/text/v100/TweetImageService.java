@@ -14,7 +14,10 @@ public interface TweetImageService extends Service {
 
     @Override
     default Descriptor descriptor() {
-        return named("tweet-image").publishing(topic("tweet-image", this::tweetImageTopic).withMessageSerializer(new ScalaPBMessageSerializer<>(Envelope.messageCompanion())));
+        return named("tweet-image")
+                .publishing(
+                        topic("tweet-image", this::tweetImageTopic).withMessageSerializer(ScalaPBMessageSerializer.of(Envelope.messageCompanion()))
+                );
     }
 
 }

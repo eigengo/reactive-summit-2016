@@ -26,7 +26,7 @@ import com.lightbend.lagom.javadsl.api.deser.MessageSerializer.{NegotiatedDeseri
 import com.lightbend.lagom.javadsl.api.transport.MessageProtocol
 import com.trueaccord.scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
-class ScalaPBMessageSerializer[M <: GeneratedMessage](companion: GeneratedMessageCompanion[_ <: M with Message[_]]) extends MessageSerializer[M, ByteString] {
+class ScalaPBMessageSerializer[M <: GeneratedMessage] private (companion: GeneratedMessageCompanion[_ <: M with Message[_]]) extends MessageSerializer[M, ByteString] {
   import org.eigengo.rsa.text.v100.ScalaPBMessageSerializer._
 
   override def deserializer(protocol: MessageProtocol): NegotiatedDeserializer[M, ByteString] =
@@ -41,6 +41,8 @@ class ScalaPBMessageSerializer[M <: GeneratedMessage](companion: GeneratedMessag
 }
 
 object ScalaPBMessageSerializer {
+  def of[M <: GeneratedMessage](companion: GeneratedMessageCompanion[_ <: M with Message[_]]): ScalaPBMessageSerializer[M] = new ScalaPBMessageSerializer[M](companion)
+
   class ScalaPBNegotiatedSerializer[M <: GeneratedMessage] extends NegotiatedSerializer[M, ByteString] {
     override def serialize(messageEntity: M): ByteString = ByteString(messageEntity.toByteArray)
   }

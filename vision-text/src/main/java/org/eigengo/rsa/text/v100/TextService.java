@@ -24,12 +24,18 @@ import com.lightbend.lagom.javadsl.api.broker.Topic;
 import org.eigengo.rsa.Envelope;
 
 import static com.lightbend.lagom.javadsl.api.Service.*;
+import static com.lightbend.lagom.javadsl.api.Service.topic;
 
 public interface TextService extends Service {
 
+    Topic<Envelope> textTopic();
+
     @Override
     default Descriptor descriptor() {
-        return named("text");
+        return named("text")
+                .publishing(
+                        topic("tweet-image", this::textTopic).withMessageSerializer(ScalaPBMessageSerializer.of(Envelope.messageCompanion()))
+                );
     }
 
 }

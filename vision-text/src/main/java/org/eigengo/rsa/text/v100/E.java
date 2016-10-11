@@ -14,5 +14,5 @@ interface E extends AggregateEvent<E> {
 }
 
 class ETag {
-    static AggregateEventTag<E> INSTANCE = AggregateEventTag.of(E.class);
+    static AggregateEventTag<E> INSTANCE = AggregateEventTag.of(E.class, "in");
 }

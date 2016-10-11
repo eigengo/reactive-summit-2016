@@ -19,23 +19,39 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.Done;
-import akka.stream.javadsl.Flow;
+import akka.NotUsed;
+import akka.japi.Pair;
+import akka.stream.OverflowStrategy;
+import akka.stream.javadsl.*;
 import com.google.inject.Inject;
-import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
+import com.lightbend.lagom.javadsl.api.broker.Topic;
+import com.lightbend.lagom.javadsl.broker.TopicProducer;
+import com.lightbend.lagom.javadsl.persistence.Offset;
 import org.eigengo.rsa.Envelope;
 
 public class TextServiceImpl implements TextService {
-    private final PersistentEntityRegistry persistentEntityRegistry;
+    private final Flow<Envelope, Envelope, NotUsed> flow = Flow.fromFunction(this::extractText);
+//    private final Source<Envelope, SourceQueueWithComplete<Envelope>> queue =
+//            Source.<Envelope>queue(10, OverflowStrategy.dropTail()).via(flow);
+    private final Sink<Envelope, SinkQueueWithCancel<Envelope>> queue = Sink.<Envelope>queue();
 
-    @Inject
-    public TextServiceImpl(PersistentEntityRegistry persistentEntityRegistry, TweetImageService tweetImageService) {
-        this.persistentEntityRegistry = persistentEntityRegistry;
-        tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(Flow.fromFunction(this::extractText));
+
+
+    @Override
+    public Topic<Envelope> textTopic() {
+
+        return TopicProducer.<Envelope>singleStreamWithOffset(offset -> Source.<Envelope>queue(10, OverflowStrategy.dropTail()).map(e -> new Pair<Envelope, Offset>(e, offset)).to(queue));
     }
 
-    private Done extractText(Envelope envelope) {
-        System.out.println(envelope);
-        return Done.getInstance();
+    @Inject
+    public TextServiceImpl(TweetImageService tweetImageService) {
+        tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(flow.alsoTo(queue).map(x -> Done.getInstance()));
+    }
+
+    private Envelope extractText(Envelope envelope) {
+        System.out.println("*** find text in " + envelope.messageId());
+
+        return envelope;
     }
 
 }
