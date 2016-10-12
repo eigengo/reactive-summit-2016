@@ -22,6 +22,7 @@ import com.trueaccord.scalapb.GeneratedMessage
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.identity.v100.Identity.{IdentifiedFace, UnknownFace}
 import org.eigengo.rsa.scene.v100.Scene
+import org.eigengo.rsa.text.v100.Text
 import org.eigengo.rsa.{Envelope, identity, scene}
 
 import scala.collection.SortedSet
@@ -59,6 +60,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
       (envelope.version, envelope.messageType) match {
         case (100, "identity") ⇒ identity.v100.Identity.validate(envelope.payload.toByteArray).toOption
         case (100, "scene") ⇒ scene.v100.Scene.validate(envelope.payload.toByteArray).toOption
+        case (100, "text") ⇒ org.eigengo.rsa.text.v100.Text.validate(envelope.payload.toByteArray).toOption
         case _ ⇒ None
       }
     }
@@ -83,6 +85,11 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         .map(_.asInstanceOf[List[Scene]])
         .map(_.foldLeft(List.empty[String]) { (result, scene) ⇒ result ++ scene.labels.map(_.label) }.distinct)
 
+      val areasOfText = groups
+        .get(classOf[Text])
+        .map(_.asInstanceOf[List[Text]])
+        .map(_.foldLeft(List.empty[String]) { (result, text) ⇒ result :+ text.areas.mkString(", ") })
+
       val sb = new StringBuilder()
 
       identities.foreach { case (identifiedFaces, unknownFaces) ⇒
@@ -94,6 +101,11 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
       sceneLabels.foreach { labels ⇒
         if (sb.nonEmpty) sb.append(" and ")
         if (labels.nonEmpty) sb.append(s"${labels.mkString(", ")}")
+      }
+
+      areasOfText.foreach { text ⇒
+        if (sb.nonEmpty) sb.append(" reading ")
+        if (text.nonEmpty) sb.append(s"${text.mkString(", ")}")
       }
 
       if (sb.nonEmpty) Some(HandleSummary.Item(windowSize, sb.toString(), Nil)) else None

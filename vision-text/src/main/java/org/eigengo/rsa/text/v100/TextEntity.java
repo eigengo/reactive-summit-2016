@@ -19,29 +19,34 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.NotUsed;
+import akka.protobuf.ByteString;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
-import com.google.protobuf.ByteString;
 import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import com.lightbend.lagom.serialization.Jsonable;
 import org.eigengo.rsa.Envelope;
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 import javax.annotation.concurrent.Immutable;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
 class TextEntity extends PersistentEntity<TextEntityCommand, TextEntityEvent, NotUsed> {
 
-    @Override
+    private TextEntityEvent.Ocred ocr(TextEntityCommand.Ocr ocr) {
+        new TextEntityEvent.Ocred(entityId(), ocr.correlationId, ocr.ingestionTimestamp, System.nanoTime(), new String[]{"text"});
+    }
+
     public Behavior initialBehavior(Optional<NotUsed> snapshotState) {
         BehaviorBuilder b = newBehaviorBuilder(null);
         b.setCommandHandler(TextEntityCommand.Ocr.class, (cmd, ctx) -> {
-                    TextEntityEvent.Ocred event = new TextEntityEvent.Ocred(entityId(), cmd.correlationId, cmd.ingestionTimestamp, System.nanoTime(), "Text");
+                    TextEntityEvent.Ocred event = ocr(cmd);
                     return ctx.thenPersist(event, e -> ctx.reply(NotUsed.getInstance()));
                 }
         );
@@ -62,21 +67,23 @@ interface TextEntityEvent extends Jsonable {
         final String correlationId;
         final long ingestionTimestamp;
         final long processingTimestamp;
-        final String text;
+        final String[] areas;
 
         @JsonCreator
-        public Ocred(String handle, String correlationId, long ingestionTimestamp, long processingTimestamp, String text) {
+        public Ocred(String handle, String correlationId, long ingestionTimestamp, long processingTimestamp, String[] areas) {
             this.handle = handle;
             this.correlationId = correlationId;
             this.ingestionTimestamp = ingestionTimestamp;
             this.processingTimestamp = processingTimestamp;
-            this.text = text;
+            this.areas = areas;
         }
 
         Envelope envelope() {
-            System.out.println("*** making envelope");
+            Seq<String> areas = JavaConversions.asScalaBuffer(Arrays.asList(this.areas));
+            Text payload = Text.apply(areas);
+
             return Envelope.apply(100, this.processingTimestamp, this.ingestionTimestamp, this.handle, this.correlationId,
-                    UUID.randomUUID().toString(), "text", ByteString.copyFrom(this.text, Charsets.UTF_8));
+                    UUID.randomUUID().toString(), "text", ByteString.copyFrom(payload.toByteArray()));
         }
 
         @Override
@@ -88,12 +95,12 @@ interface TextEntityEvent extends Jsonable {
                     processingTimestamp == ocred.processingTimestamp &&
                     Objects.equal(correlationId, ocred.correlationId) &&
                     Objects.equal(handle, ocred.handle) &&
-                    Objects.equal(text, ocred.text);
+                    Objects.equal(areas, ocred.areas);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(correlationId, handle, ingestionTimestamp, processingTimestamp, text);
+            return Objects.hashCode(correlationId, handle, ingestionTimestamp, processingTimestamp, areas);
         }
 
         @Override
