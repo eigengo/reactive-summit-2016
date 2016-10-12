@@ -19,7 +19,6 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.NotUsed;
-import akka.event.Logging;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Objects;
