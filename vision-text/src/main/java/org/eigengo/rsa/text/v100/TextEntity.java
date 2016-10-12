@@ -19,6 +19,7 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.NotUsed;
+import akka.event.Logging;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Objects;
@@ -29,6 +30,8 @@ import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
 import com.lightbend.lagom.serialization.CompressedJsonable;
 import com.lightbend.lagom.serialization.Jsonable;
 import org.eigengo.rsa.Envelope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -38,8 +41,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 class TextEntity extends PersistentEntity<TextEntityCommand, TextEntityEvent, NotUsed> {
+    private static final Logger log = LoggerFactory.getLogger(TextEntity.class);
 
     private TextEntityEvent.Ocred ocr(TextEntityCommand.Ocr ocr) {
+        log.info("Performing OCR for {}", ocr.correlationId);
         return new TextEntityEvent.Ocred(entityId(), ocr.correlationId, ocr.ingestionTimestamp, System.nanoTime(), new String[]{"text"});
     }
 
