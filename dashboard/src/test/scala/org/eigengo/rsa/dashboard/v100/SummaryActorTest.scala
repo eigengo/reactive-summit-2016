@@ -25,6 +25,7 @@ import akka.testkit.{TestActorRef, TestKitBase}
 import com.google.protobuf.ByteString
 import com.trueaccord.scalapb.GeneratedMessage
 import com.typesafe.config.ConfigFactory
+import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
 import org.scalatest.prop.PropertyChecks
@@ -40,9 +41,9 @@ class SummaryActorTest extends FlatSpec with TestKitBase with PropertyChecks wit
     val scene = ("scene", Scene(labels = Seq(Scene.Label(label = "salad", score = 1))))
     val identity = ("identity", Identity(face = Identity.Face.IdentifiedFace(Identity.IdentifiedFace(name = "Jan", score = 1))))
 
-    def envelopeForHandle(ingestionTimestamp: Long, handle: String, m: (String, GeneratedMessage)): TweetEnvelope = {
+    def envelopeForHandle(ingestionTimestamp: Long, handle: String, m: (String, GeneratedMessage)): Envelope = {
       val (messageType, message) = m
-      TweetEnvelope(version = 100,
+      Envelope(version = 100,
         ingestionTimestamp = ingestionTimestamp,
         handle = handle,
         messageType = messageType,

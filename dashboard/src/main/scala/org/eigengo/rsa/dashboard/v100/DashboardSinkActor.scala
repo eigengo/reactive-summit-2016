@@ -67,16 +67,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
   override def receive: Receive = {
     case extractor(consumerRecords) ⇒
       consumerRecords.pairs.foreach {
-        case (None, _) ⇒
-          context.system.log.warning("Received (None, _) from Kafka.")
-        case (Some(handle), envelope) ⇒
-          context.system.eventStream.publish(
-            TweetEnvelope(version = 100,
-              handle = handle,
-              ingestionTimestamp = envelope.ingestionTimestamp,
-              messageId = envelope.messageId,
-              messageType = envelope.messageType,
-              payload = envelope.payload))
+        case (_, envelope) ⇒ context.system.eventStream.publish(envelope)
       }
       kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)
   }

@@ -1,6 +1,22 @@
+/*
+ * The Reactive Summit Austin talk
+ * Copyright (C) 2016 Jan Machacek
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 package org.eigengo.rsa
-
-import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.MediaType.Compressible
@@ -14,7 +30,7 @@ import com.trueaccord.scalapb.json.JsonFormat
 import com.trueaccord.scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
 import scala.annotation.StaticAnnotation
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait ScalaPBMarshalling {
   private val protobufContentType = ContentType(MediaType.applicationBinary("octet-stream", Compressible, "proto"))

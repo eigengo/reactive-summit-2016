@@ -22,13 +22,14 @@ import com.trueaccord.scalapb.GeneratedMessage
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.identity.v100.Identity.{IdentifiedFace, UnknownFace}
 import org.eigengo.rsa.scene.v100.Scene
-import org.eigengo.rsa.{identity, scene}
+import org.eigengo.rsa.text.v100.Text
+import org.eigengo.rsa.{Envelope, identity, scene}
 
-import scala.collection.{SortedSet, mutable}
+import scala.collection.SortedSet
 
 object HandleSummaryItemsBuilder {
-  implicit object TweetEnvelopeOrdering extends Ordering[TweetEnvelope] {
-    override def compare(x: TweetEnvelope, y: TweetEnvelope): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
+  implicit object EnvelopeOrdering extends Ordering[Envelope] {
+    override def compare(x: Envelope, y: Envelope): Int = x.ingestionTimestamp.compare(y.ingestionTimestamp)
   }
 
   implicit object IdentifiedFaceOrdering extends Ordering[IdentifiedFace] {
@@ -46,24 +47,25 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
 
   import scala.concurrent.duration._
 
-  private var messages = List.empty[TweetEnvelope]
+  private var messages = List.empty[Envelope]
 
-  private def acceptableIngestionTimestampDiff(m1: TweetEnvelope)(m2: TweetEnvelope): Boolean =
+  private def acceptableIngestionTimestampDiff(m1: Envelope)(m2: Envelope): Boolean =
     math.abs(m1.ingestionTimestamp - m2.ingestionTimestamp) < 30.seconds.toNanos
 
-  def isActive(lastIngestedMessage: TweetEnvelope): Boolean =
+  def isActive(lastIngestedMessage: Envelope): Boolean =
     messages.lastOption.forall(acceptableIngestionTimestampDiff(lastIngestedMessage))
 
   def build(): List[HandleSummary.Item] = {
-    def messageFromEnvelope(envelope: TweetEnvelope): Option[GeneratedMessage] = {
+    def messageFromEnvelope(envelope: Envelope): Option[GeneratedMessage] = {
       (envelope.version, envelope.messageType) match {
         case (100, "identity") ⇒ identity.v100.Identity.validate(envelope.payload.toByteArray).toOption
         case (100, "scene") ⇒ scene.v100.Scene.validate(envelope.payload.toByteArray).toOption
+        case (100, "text") ⇒ org.eigengo.rsa.text.v100.Text.validate(envelope.payload.toByteArray).toOption
         case _ ⇒ None
       }
     }
 
-    def itemFromWindow(window: List[TweetEnvelope]): Option[HandleSummary.Item] = {
+    def itemFromWindow(window: List[Envelope]): Option[HandleSummary.Item] = {
       val windowSize = (window.last.ingestionTimestamp - window.head.ingestionTimestamp).nanos.toMillis.toInt
       val groups = window.flatMap(msg ⇒ messageFromEnvelope(msg)).groupBy(_.getClass)
 
@@ -83,6 +85,11 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         .map(_.asInstanceOf[List[Scene]])
         .map(_.foldLeft(List.empty[String]) { (result, scene) ⇒ result ++ scene.labels.map(_.label) }.distinct)
 
+      val areasOfText = groups
+        .get(classOf[Text])
+        .map(_.asInstanceOf[List[Text]])
+        .map(_.foldLeft(List.empty[String]) { (result, text) ⇒ result :+ text.areas.mkString(", ") })
+
       val sb = new StringBuilder()
 
       identities.foreach { case (identifiedFaces, unknownFaces) ⇒
@@ -96,11 +103,16 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
         if (labels.nonEmpty) sb.append(s"${labels.mkString(", ")}")
       }
 
+      areasOfText.foreach { text ⇒
+        if (sb.nonEmpty) sb.append(" reading ")
+        if (text.nonEmpty) sb.append(s"${text.mkString(", ")}")
+      }
+
       if (sb.nonEmpty) Some(HandleSummary.Item(windowSize, sb.toString(), Nil)) else None
     }
 
     def transformMessages(): List[HandleSummary.Item] = {
-      val windows = messages.foldLeft(List.empty[List[TweetEnvelope]]) {
+      val windows = messages.foldLeft(List.empty[List[Envelope]]) {
         case (Nil, msg) ⇒ List(List(msg))
         case (nel, msg) if acceptableIngestionTimestampDiff(nel.last.last)(msg) ⇒ nel.init :+ (nel.last :+ msg)
         case (nel, msg) ⇒ nel :+ List(msg)
@@ -112,7 +124,7 @@ class HandleSummaryItemsBuilder(maximumMessages: Int = 500) {
     transformMessages()
   }
 
-  def append(message: TweetEnvelope): Unit = {
+  def append(message: Envelope): Unit = {
     if (!messages.exists(_.messageId == message.messageId)) {
       messages = (message :: messages).takeRight(maximumMessages).sorted
     }

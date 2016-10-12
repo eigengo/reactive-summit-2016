@@ -73,11 +73,8 @@ class IdentityMatcherActor(producerConf: KafkaProducer.Conf[String, Envelope],
 
   override def receiveCommand: Receive = handleIdentifyFace orElse {
     case extractor(consumerRecords) ⇒
-      val identifyFaces = consumerRecords.pairs.flatMap {
-        case (None, _) ⇒
-          None
-        case (Some(handle), envelope) ⇒
-          Some(IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, handle, envelope.payload))
+      val identifyFaces = consumerRecords.pairs.map {
+        case (_, envelope) ⇒ IdentifyFace(envelope.ingestionTimestamp, envelope.correlationId, envelope.handle, envelope.payload)
       }
 
       persist(IdentifyFaces(identifyFaces = identifyFaces)) { result ⇒

@@ -62,6 +62,7 @@ object Main {
         val payload = ByteString.copyFrom(resources(Random.nextInt(resources.length)))
         val ret = Try(producer.send(KafkaProducerRecord("tweet-image", handle,
           Envelope(version = 100,
+            handle = handle,
             ingestionTimestamp = System.nanoTime(),
             processingTimestamp = System.nanoTime(),
             messageId = UUID.randomUUID().toString,
