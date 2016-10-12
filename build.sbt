@@ -140,7 +140,9 @@ lazy val `vision-text` = project.in(file("vision-text"))
   )
   .settings(
     lagomKafkaEnabled in ThisBuild := false,
-    lagomKafkaAddress in ThisBuild := "localhost:9092"
+    lagomKafkaAddress in ThisBuild := "localhost:9092",
+    lagomCassandraEnabled in ThisBuild := false,
+    lagomCassandraPort in ThisBuild := 9042
   )
 
 lazy val ingest = project.in(file("ingest"))

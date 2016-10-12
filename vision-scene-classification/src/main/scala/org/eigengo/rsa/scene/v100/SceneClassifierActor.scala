@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream
 import java.util.UUID
 
 import akka.actor.{Actor, OneForOneStrategy, Props, SupervisorStrategy}
-import akka.routing.RandomPool
 import cakesolutions.kafka._
 import cakesolutions.kafka.akka.KafkaConsumerActor.{Confirm, Subscribe, Unsubscribe}
 import cakesolutions.kafka.akka.{ConsumerRecords, KafkaConsumerActor}
@@ -90,8 +89,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
   override def receive: Receive = {
     case extractor(consumerRecords) ⇒
       val futures = consumerRecords.pairs.flatMap {
-        case (None, _) ⇒ None
-        case (Some(handle), envelope) ⇒
+        case (_, envelope) ⇒
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           sceneClassifier.classify(is).map { scene ⇒
             val out = Envelope(version = 100,
@@ -102,7 +100,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
               messageType = "scene",
               payload = ByteString.copyFrom(scene.toByteArray))
 
-            producer.send(KafkaProducerRecord("scene", handle, out))
+            producer.send(KafkaProducerRecord("scene", envelope.handle, out))
           }.toOption
       }
       import context.dispatcher

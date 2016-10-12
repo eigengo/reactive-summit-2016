@@ -20,6 +20,7 @@ package org.eigengo.rsa.dashboard.v100
 
 import akka.actor.Props
 import akka.persistence.PersistentActor
+import org.eigengo.rsa.Envelope
 
 object SummaryActor {
   lazy val props: Props = Props[SummaryActor]
@@ -38,7 +39,7 @@ class SummaryActor extends PersistentActor {
   private val topHandleHSIBuilders: collection.mutable.Map[String, HandleSummaryItemsBuilder] = collection.mutable.Map()
 
   override def preStart(): Unit = {
-    context.system.eventStream.subscribe(self, classOf[TweetEnvelope])
+    context.system.eventStream.subscribe(self, classOf[Envelope])
   }
 
   override def postStop(): Unit = {
@@ -48,7 +49,7 @@ class SummaryActor extends PersistentActor {
   override val persistenceId: String = "summary"
 
   override def receiveRecover: Receive = {
-    case m: TweetEnvelope ⇒ handleMessage(m)
+    case m: Envelope ⇒ handleMessage(m)
   }
 
   def buildSummary(): Summary = {
@@ -60,11 +61,11 @@ class SummaryActor extends PersistentActor {
   }
 
   override def receiveCommand: Receive = {
-    case m: TweetEnvelope ⇒ persist(m)(handleMessage)
+    case m: Envelope ⇒ persist(m)(handleMessage)
     case Peek ⇒ context.system.eventStream.publish(buildSummary())
   }
 
-  private def handleMessage(message: TweetEnvelope): Unit = {
+  private def handleMessage(message: Envelope): Unit = {
     if (topHandleHSIBuilders.size > maximumTopHandles) {
       topHandleHSIBuilders
         .find { case (h, b) ⇒ h != message.handle && !b.isActive(message) }

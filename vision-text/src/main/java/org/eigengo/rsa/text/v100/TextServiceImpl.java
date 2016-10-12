@@ -20,37 +20,38 @@ package org.eigengo.rsa.text.v100;
 
 import akka.Done;
 import akka.japi.Pair;
-import akka.stream.Materializer;
-import akka.stream.OverflowStrategy;
 import akka.stream.javadsl.Flow;
-import akka.stream.javadsl.Sink;
-import akka.stream.javadsl.Source;
-import akka.stream.javadsl.SourceQueueWithComplete;
 import com.google.inject.Inject;
 import com.lightbend.lagom.javadsl.api.broker.Topic;
 import com.lightbend.lagom.javadsl.broker.TopicProducer;
+import com.lightbend.lagom.javadsl.persistence.PersistentEntityRef;
+import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 import org.eigengo.rsa.Envelope;
 
 public class TextServiceImpl implements TextService {
-    private final Source<Envelope, SourceQueueWithComplete<Envelope>> queueSource = Source.<Envelope>queue(10, OverflowStrategy.backpressure());
-    private final SourceQueueWithComplete<Envelope> queue;
+    private final PersistentEntityRegistry persistentEntityRegistry;
 
     @Override
     public Topic<Envelope> textTopic() {
-        Source<Envelope, ?> src = queueSource; //Source.tick(FiniteDuration.Zero(), FiniteDuration.apply(1000, TimeUnit.MILLISECONDS), Envelope.defaultInstance());
-
-        return TopicProducer.singleStreamWithOffset(offset -> src.map(e -> new Pair<>(e, offset)));
+        return TopicProducer.singleStreamWithOffset(offset -> persistentEntityRegistry
+                .eventStream(TextEntityEvent.OcredTag.INSTANCE, offset)
+                .map(p -> new Pair<>(p.first().envelope(), offset))
+        );
     }
 
     @Inject
-    public TextServiceImpl(Materializer materializer, TweetImageService tweetImageService) {
-        this.queue = queueSource.to(Sink.ignore()).run(materializer);
+    public TextServiceImpl(PersistentEntityRegistry persistentEntityRegistry, TweetImageService tweetImageService) {
+        this.persistentEntityRegistry = persistentEntityRegistry;
+
+        persistentEntityRegistry.register(TextEntity.class);
         tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(Flow.fromFunction(this::extractText));
     }
 
     private Done extractText(Envelope envelope) {
-        System.out.println("*** find text in " + envelope.messageId());
-        queue.offer(envelope);
+        TextEntityCommand.Ocr command = new TextEntityCommand.Ocr(envelope.correlationId(), envelope.ingestionTimestamp(), envelope.payload().toByteArray());
+        PersistentEntityRef<TextEntityCommand> ref = persistentEntityRegistry.refFor(TextEntity.class, envelope.handle());
+        ref.ask(command);
+
         return Done.getInstance();
     }
 

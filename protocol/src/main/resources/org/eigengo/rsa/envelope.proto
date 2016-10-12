@@ -6,8 +6,9 @@ message Envelope {
     int32 version = 1;
     int64 processingTimestamp = 2;
     int64 ingestionTimestamp = 3;
-    string correlationId = 4;
-    string messageId = 5;
-    string messageType = 6;
-    bytes payload = 7;
+    string handle = 5;
+    string correlationId = 6;
+    string messageId = 7;
+    string messageType = 8;
+    bytes payload = 9;
 }

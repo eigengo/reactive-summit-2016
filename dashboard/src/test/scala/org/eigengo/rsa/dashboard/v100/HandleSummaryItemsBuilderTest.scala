@@ -20,6 +20,7 @@ package org.eigengo.rsa.dashboard.v100
 
 import com.google.protobuf.ByteString
 import com.trueaccord.scalapb.GeneratedMessage
+import org.eigengo.rsa.Envelope
 import org.eigengo.rsa.identity.v100.Identity
 import org.eigengo.rsa.scene.v100.Scene
 import org.scalatest.{FlatSpec, Matchers}
@@ -28,9 +29,9 @@ import org.scalatest.prop.PropertyChecks
 class HandleSummaryItemsBuilderTest extends FlatSpec with PropertyChecks with Matchers {
   import scala.concurrent.duration._
 
-  private def pue(ingestionTimestamp: Long, messageId: String, messageType: String, message: GeneratedMessage): TweetEnvelope = {
+  private def pue(ingestionTimestamp: Long, messageId: String, messageType: String, message: GeneratedMessage): Envelope = {
     val payload = ByteString.copyFrom(message.toByteArray)
-    TweetEnvelope(version = 100, ingestionTimestamp = ingestionTimestamp, handle = "@honzam399", messageType = messageType, messageId = messageId, payload = payload)
+    Envelope(version = 100, ingestionTimestamp = ingestionTimestamp, handle = "@honzam399", messageType = messageType, messageId = messageId, payload = payload)
   }
 
   it should "handle single item" in {
