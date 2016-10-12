@@ -19,10 +19,10 @@
 package org.eigengo.rsa.text.v100;
 
 import akka.NotUsed;
-import akka.protobuf.ByteString;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Objects;
+import com.google.protobuf.ByteString;
 import com.lightbend.lagom.javadsl.persistence.AggregateEvent;
 import com.lightbend.lagom.javadsl.persistence.AggregateEventTag;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntity;
@@ -40,7 +40,7 @@ import java.util.UUID;
 class TextEntity extends PersistentEntity<TextEntityCommand, TextEntityEvent, NotUsed> {
 
     private TextEntityEvent.Ocred ocr(TextEntityCommand.Ocr ocr) {
-        new TextEntityEvent.Ocred(entityId(), ocr.correlationId, ocr.ingestionTimestamp, System.nanoTime(), new String[]{"text"});
+        return new TextEntityEvent.Ocred(entityId(), ocr.correlationId, ocr.ingestionTimestamp, System.nanoTime(), new String[]{"text"});
     }
 
     public Behavior initialBehavior(Optional<NotUsed> snapshotState) {
@@ -70,7 +70,7 @@ interface TextEntityEvent extends Jsonable {
         final String[] areas;
 
         @JsonCreator
-        public Ocred(String handle, String correlationId, long ingestionTimestamp, long processingTimestamp, String[] areas) {
+        Ocred(String handle, String correlationId, long ingestionTimestamp, long processingTimestamp, String[] areas) {
             this.handle = handle;
             this.correlationId = correlationId;
             this.ingestionTimestamp = ingestionTimestamp;
