@@ -93,6 +93,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
           val is = new ByteArrayInputStream(envelope.payload.toByteArray)
           sceneClassifier.classify(is).map { scene ⇒
             val out = Envelope(version = 100,
+              handle = envelope.handle,
               processingTimestamp = System.nanoTime(),
               ingestionTimestamp = envelope.ingestionTimestamp,
               correlationId = envelope.correlationId,
