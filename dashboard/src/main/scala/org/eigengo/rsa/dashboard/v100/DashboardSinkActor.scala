@@ -57,7 +57,7 @@ class DashboardSinkActor(consumerConf: KafkaConsumer.Conf[String, Envelope], con
   }
 
   override def preStart(): Unit = {
-    kafkaConsumerActor ! Subscribe.AutoPartition(Seq("identity", "scene"))
+    kafkaConsumerActor ! Subscribe.AutoPartition(Seq("identity", "scene", "text"))
   }
 
   override def postStop(): Unit = {
