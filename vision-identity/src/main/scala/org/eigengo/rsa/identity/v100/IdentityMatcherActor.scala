@@ -47,6 +47,7 @@ class IdentityMatcherActor(producerConf: KafkaProducer.Conf[String, Envelope],
         }
         val identity = Identity(face = face)
         val out = Envelope(version = 100,
+          handle = identifyFace.handle,
           processingTimestamp = System.nanoTime(),
           ingestionTimestamp = identifyFace.ingestionTimestamp,
           correlationId = identifyFace.correlationId,
