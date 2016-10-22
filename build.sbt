@@ -22,16 +22,24 @@ lazy val `linter-plugin` = project.in(file("linter-plugin"))
   ))
 
 lazy val dashboard = project.in(file("dashboard"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
   .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
   .settings(protobufSettings(Seq(protocol)))
+  .settings(Seq(
+      BundleKeys.endpoints := Map(
+        "dashboard-service-http" → Endpoint("http", services = Set(URI("http://:8080/"))),
+        "dashboard-service-ws" → Endpoint("ws", services = Set(URI("ws://:8080/")))
+      )
+  ))
   .settings(Seq(
     libraryDependencies += Dependencies.akka.actor,
     libraryDependencies += Dependencies.akka.http.core,
@@ -68,6 +76,7 @@ lazy val `deeplearning4j-common` = project.in(file("deeplearning4j-common"))
   ))
 
 lazy val `vision-identity` = project.in(file("vision-identity"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
@@ -75,6 +84,7 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
@@ -91,12 +101,14 @@ lazy val `vision-identity` = project.in(file("vision-identity"))
   ))
 
 lazy val `vision-scene-classification` = project.in(file("vision-scene-classification"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
   .dependsOn(`deeplearning4j-common`)
 
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
@@ -110,9 +122,12 @@ lazy val `vision-scene-classification` = project.in(file("vision-scene-classific
   ))
 
 lazy val it = project.in(file("it"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
 
+  .settings(bundleSettings)
+  .settings(bundleSettings)
   .settings(commonSettings)
   .settings(dockerSettings)
   .settings(protobufSettings(Seq(protocol)))
@@ -120,6 +135,7 @@ lazy val it = project.in(file("it"))
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
+/*
 lazy val `vision-text` = project.in(file("vision-text"))
   .enablePlugins(LagomJava)
 
@@ -129,6 +145,7 @@ lazy val `vision-text` = project.in(file("vision-text"))
   .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
@@ -144,14 +161,16 @@ lazy val `vision-text` = project.in(file("vision-text"))
     lagomCassandraEnabled in ThisBuild := false,
     lagomCassandraPort in ThisBuild := 9042
   )
-
+*/
 lazy val ingest = project.in(file("ingest"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
   .dependsOn(`protobuf-testkit` % Test)
   .dependsOn(`linter-plugin` % Compile)
   .dependsOn(`scalapb-akka-serializer`)
 
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(dockerSettings)
   .settings(serverSettings)
   .settings(linterSettings)
@@ -164,11 +183,15 @@ lazy val ingest = project.in(file("ingest"))
     libraryDependencies += Dependencies.akka.http.experimental,
     libraryDependencies += Dependencies.scalapb.json4s,
     libraryDependencies += Dependencies.koauth,
+    libraryDependencies += Dependencies.conductr.akka,
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
 lazy val `fat-it` = project.in(file("fat-it"))
+  .enablePlugins(JavaAppPackaging)
+
   .settings(commonSettings)
+  .settings(bundleSettings)
   .settings(deeplearning4jSettings)
   .dependsOn(`vision-identity`, `vision-scene-classification`, dashboard, it, ingest)
 
@@ -195,6 +218,9 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.bintrayRepo("krasserm", "maven"),
   resolvers += Resolver.bintrayRepo("tabdulradi", "maven"),
   resolvers += Resolver.jcenterRepo,
+  credentials += Credentials(Path.userHome / ".lightbend" / "commercial.credentials"),
+  resolvers += "com-mvn" at "https://repo.lightbend.com/commercial-releases/",
+  resolvers += Resolver.url("com-ivy", url("https://repo.lightbend.com/commercial-releases/"))(Resolver.ivyStylePatterns),
   autoCompilerPlugins := true
 )
 
@@ -212,6 +238,14 @@ def protobufSettings(protocols: Seq[Project]): Seq[Setting[_]] = PB.protobufSett
   //libraryDependencies -= "com.google.protobuf" % "protobuf-java" % (version in PB.protobufConfig).value
 ) ++ protocols.map(p ⇒ PB.externalIncludePath in PB.protobufConfig := ((classDirectory in p) in Compile).value)
 
+
+import ByteConversions._
+
+lazy val bundleSettings = Seq(
+  BundleKeys.memory := 1024.MiB,
+  BundleKeys.diskSpace := 5.MB,
+  BundleKeys.nrOfCpus := 1
+)
 
 lazy val dockerSettings = Seq(
   dockerBaseImage := "cakesolutions/alpine-dcos-base:latest",

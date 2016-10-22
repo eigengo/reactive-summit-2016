@@ -21,6 +21,12 @@ object Dependencies {
     val json4s = "com.trueaccord.scalapb" %% "scalapb-json4s" % "0.1.1"
   }
 
+  object conductr {
+    private val version = "1.4.10"
+
+    val akka = "com.typesafe.conductr" %% "akka24-conductr-bundle-lib" % version
+  }
+
   object akka {
     private val version = "2.4.10"
 

@@ -1,5 +1,6 @@
 # We don't commit *any* of IntelliJ's files
 .idea/
+.conductr
 
 .DS_Store
 

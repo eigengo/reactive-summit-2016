@@ -53,7 +53,7 @@ object Main extends App {
 
   val consumer = new DefaultConsumerService(system.dispatcher)
 
-  val body = "track=%23ReactiveSummit"
+  val body = "track=%23ReactiveSummi"
   val source = Uri(url)
 
   val koauthRequest = KoauthRequest(method = "POST", url = url, authorizationHeader = None, body = Some(body))
