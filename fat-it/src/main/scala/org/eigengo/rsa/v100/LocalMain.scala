@@ -35,7 +35,7 @@ object LocalMain {
         System.setProperty(k, v)
       }
 
-//    org.eigengo.rsa.ingest.v100.Main.main(args)
+    org.eigengo.rsa.ingest.v100.Main.main(args)
     org.eigengo.rsa.dashboard.v100.Main.main(args)
     org.eigengo.rsa.scene.v100.Main.main(args)
     org.eigengo.rsa.identity.v100.Main.main(args)

@@ -37,6 +37,7 @@ class SimplifiedTweetProcessorActor(producerConf: KafkaProducer.Conf[String, Env
     case TweetImage(handle, content) ⇒
       producer.send(KafkaProducerRecord("tweet-image", handle,
         Envelope(version = 100,
+          handle = handle,
           ingestionTimestamp = System.nanoTime(),
           processingTimestamp = System.nanoTime(),
           messageId = UUID.randomUUID().toString,
