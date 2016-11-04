@@ -244,7 +244,9 @@ import ByteConversions._
 lazy val bundleSettings = Seq(
   BundleKeys.memory := 1024.MiB,
   BundleKeys.diskSpace := 5.MB,
-  BundleKeys.nrOfCpus := 1
+  BundleKeys.nrOfCpus := 1,
+
+  SandboxKeys.imageVersion in Global := "1.1.10"
 )
 
 lazy val dockerSettings = Seq(
