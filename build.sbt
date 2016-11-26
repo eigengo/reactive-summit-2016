@@ -135,7 +135,6 @@ lazy val it = project.in(file("it"))
     libraryDependencies += Dependencies.cakesolutions.akkaKafkaClient
   ))
 
-/*
 lazy val `vision-text` = project.in(file("vision-text"))
   .enablePlugins(LagomJava)
 
@@ -161,7 +160,7 @@ lazy val `vision-text` = project.in(file("vision-text"))
     lagomCassandraEnabled in ThisBuild := false,
     lagomCassandraPort in ThisBuild := 9042
   )
-*/
+
 lazy val ingest = project.in(file("ingest"))
   .enablePlugins(JavaAppPackaging)
   .dependsOn(protocol % PB.protobufConfig.name)
