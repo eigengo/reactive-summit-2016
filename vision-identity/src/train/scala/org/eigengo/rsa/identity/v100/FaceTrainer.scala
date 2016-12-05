@@ -53,8 +53,8 @@ object FaceTrainer {
   val iterations = 20
   val epochs = 7
   val splitTrainTest = 0.8
+  // num of cores on machine to parallelise data load
   val nCores = 8
-  // num of cores on machine to paralize data load
   val rng = new Random()
 
   def main(args: Array[String]) {
