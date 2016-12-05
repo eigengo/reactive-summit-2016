@@ -30,6 +30,7 @@ import org.datavec.image.transform.{FlipImageTransform, ImageTransform, WarpImag
 import org.deeplearning4j.datasets.datavec.RecordReaderDataSetIterator
 import org.deeplearning4j.datasets.iterator.MultipleEpochsIterator
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
+import org.deeplearning4j.nn.conf.inputs.InputType
 import org.deeplearning4j.nn.conf.layers._
 import org.deeplearning4j.nn.conf.{GradientNormalization, MultiLayerConfiguration, NeuralNetConfiguration, Updater}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -45,11 +46,11 @@ object FaceTrainer {
   val height = 50
   val width = 50
   val channels = 3
-  val numExamples = 200
+  val numExamples = 2000
   val numLabels = 5
   val batchSize = 20
   val listenerFreq = 1
-  val iterations = 10
+  val iterations = 20
   val epochs = 7
   val splitTrainTest = 0.8
   val nCores = 8
@@ -70,15 +71,16 @@ object FaceTrainer {
     val testData: InputSplit = inputSplit(1)
 
     // Define transformation
-    val flipTransform: ImageTransform = new FlipImageTransform(rng)
-    val warpTransform: ImageTransform = new WarpImageTransform(rng, 42)
-    val transforms: List[ImageTransform] = List(null, flipTransform, warpTransform)
+    val transforms: List[ImageTransform] = List(null,
+      new FlipImageTransform(rng),
+      new WarpImageTransform(rng, 42), new WarpImageTransform(rng, 4.2f), new WarpImageTransform(rng, 420f), new WarpImageTransform(rng, .42f), new WarpImageTransform(rng, -42f)
+    )
 
     // Build model based on tiny model configuration paper
     val confTiny: MultiLayerConfiguration = new NeuralNetConfiguration.Builder()
       //.seed(seed)
       .iterations(iterations)
-      .activation("relu")
+      .activation("tanh")
       .weightInit(WeightInit.XAVIER)
       .gradientNormalization(GradientNormalization.RenormalizeL2PerLayer)
       .updater(Updater.NESTEROVS)
@@ -132,7 +134,8 @@ object FaceTrainer {
         .activation("softmax")
         .build())
       .backprop(true).pretrain(false)
-      .cnnInputSize(height, width, channels).build()
+      .setInputType(InputType.convolutional(height, width, channels))
+      .build()
 
     val network = new MultiLayerNetwork(confTiny)
     network.init()
