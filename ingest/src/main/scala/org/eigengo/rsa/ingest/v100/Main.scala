@@ -49,11 +49,12 @@ object Main extends App {
           }
       }
     }
+
   }
 
   val consumer = new DefaultConsumerService(system.dispatcher)
 
-  val body = "track=%23ReactiveSummi"
+  val body = "track=%23BeeScala" // #BeeScala
   val source = Uri(url)
 
   val koauthRequest = KoauthRequest(method = "POST", url = url, authorizationHeader = None, body = Some(body))
@@ -63,5 +64,6 @@ object Main extends App {
       h
     }
     .foreach(ingest(source, body))
+
 
 }

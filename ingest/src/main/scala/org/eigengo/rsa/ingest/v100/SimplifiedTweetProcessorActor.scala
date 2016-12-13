@@ -52,6 +52,7 @@ class SimplifiedTweetProcessorActor(producerConf: KafkaProducer.Conf[String, Env
           self ! TweetImage(handle, ByteString.copyFrom(entity.data.toArray))
         }
       }
+
   }
 
 }

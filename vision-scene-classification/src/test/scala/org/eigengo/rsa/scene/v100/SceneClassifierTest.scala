@@ -57,9 +57,9 @@ class SceneClassifierTest extends FlatSpec with PropertyChecks with Matchers {
     forAllScenes { (stream, label) ⇒
       val Success(scene) = classifier.classify(stream)
 
-      scene.labels.length should be (1)
+      scene.labels.length should be(1)
       val firstLabel = scene.labels.head
-      firstLabel.label should be (label)
+      firstLabel.label should be(label)
       firstLabel.score should be > 0.8
     }
   }

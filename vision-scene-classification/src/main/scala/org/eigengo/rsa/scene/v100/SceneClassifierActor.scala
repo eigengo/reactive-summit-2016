@@ -44,12 +44,14 @@ object SceneClassifierActor {
         NetworkLoader.filesystemResourceAccessor("/Users/janmachacek/Dropbox/Models/scene")
       )
     )
+
     val consumerConf = KafkaConsumer.Conf(
       config.getConfig("kafka.consumer-config"),
       keyDeserializer = new StringDeserializer,
       valueDeserializer = KafkaDeserializer(Envelope.parseFrom)
     )
     val consumerActorConf = KafkaConsumerActor.Conf()
+
     val producerConf = KafkaProducer.Conf(
       config.getConfig("kafka.scene-producer"),
       new StringSerializer,
@@ -104,6 +106,7 @@ class SceneClassifierActor(consumerConf: KafkaConsumer.Conf[String, Envelope], c
             producer.send(KafkaProducerRecord("scene", envelope.handle, out))
           }.toOption
       }
+
       import context.dispatcher
       Future.sequence(futures).onSuccess {
         case _ ⇒ kafkaConsumerActor ! Confirm(consumerRecords.offsets, commit = true)

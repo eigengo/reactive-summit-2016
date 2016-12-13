@@ -31,20 +31,20 @@ import org.eigengo.rsa.Envelope;
 public class TextServiceImpl implements TextService {
     private final PersistentEntityRegistry persistentEntityRegistry;
 
-    @Override
-    public Topic<Envelope> textTopic() {
-        return TopicProducer.singleStreamWithOffset(offset -> persistentEntityRegistry
-                .eventStream(TextEntityEvent.OcredTag.INSTANCE, offset)
-                .map(p -> new Pair<>(p.first().envelope(), offset))
-        );
-    }
-
     @Inject
     public TextServiceImpl(PersistentEntityRegistry persistentEntityRegistry, TweetImageService tweetImageService) {
         this.persistentEntityRegistry = persistentEntityRegistry;
 
         persistentEntityRegistry.register(TextEntity.class);
         tweetImageService.tweetImageTopic().subscribe().withGroupId("text").atLeastOnce(Flow.fromFunction(this::extractText));
+    }
+
+    @Override
+    public Topic<Envelope> textTopic() {
+        return TopicProducer.singleStreamWithOffset(offset -> persistentEntityRegistry
+                .eventStream(TextEntityEvent.OcredTag.INSTANCE, offset)
+                .map(p -> new Pair<>(p.first().envelope(), offset))
+        );
     }
 
     private Done extractText(Envelope envelope) {
