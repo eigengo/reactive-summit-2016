@@ -23,27 +23,27 @@ import java.util.UUID
 
 import scala.util.{Failure, Try}
 
-trait PreprocessingPipelineApp extends App {
-  def preprocessors: List[Preprocessor]
+trait ImagePreprocessingPipelineApp extends App {
+  def preprocessors: List[ImagePreprocessor]
   def sourceDirectory: File
   def targetDirectory: File
 
-  val result = new PreprocessingPipeline(sourceDirectory, targetDirectory, preprocessors).preprocess()
+  val result = new ImagePreprocessingPipeline(sourceDirectory, targetDirectory, preprocessors).preprocess()
 
   println(result)
 
 }
 
 
-class PreprocessingPipeline(sourceDirectory: File, targetDirectory: File,
-                                  preprocessors: List[Preprocessor]) {
+class ImagePreprocessingPipeline(sourceDirectory: File, targetDirectory: File,
+                                 preprocessors: List[ImagePreprocessor]) {
   import org.bytedeco.javacpp.opencv_imgcodecs._
 
   def preprocess(): Try[Seq[File]] = {
     if (!sourceDirectory.exists()) Failure(new Exception(s"$sourceDirectory does not exist."))
     if (!targetDirectory.mkdirs()) Failure(new Exception(s"Cannot create $targetDirectory."))
 
-    def preprocessSourceFile(preprocessors: List[Preprocessor], sourceFile: File, targetDirectory: File): List[File] = preprocessors match {
+    def preprocessSourceFile(preprocessors: List[ImagePreprocessor], sourceFile: File, targetDirectory: File): List[File] = preprocessors match {
       case h::t ⇒
         val mat = imread(sourceFile.getAbsolutePath)
         h.preprocess(mat).flatMap { result ⇒

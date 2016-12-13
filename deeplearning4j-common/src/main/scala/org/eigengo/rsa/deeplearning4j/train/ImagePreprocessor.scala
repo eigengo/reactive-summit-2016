@@ -20,44 +20,44 @@ package org.eigengo.rsa.deeplearning4j.train
 
 import org.bytedeco.javacpp.opencv_core._
 
-trait Preprocessor {
+trait ImagePreprocessor {
 
   def preprocess(mat: Mat): List[Mat]
 
 }
 
-object Preprocessor {
+object ImagePreprocessor {
   import org.bytedeco.javacpp.opencv_imgproc._
 
-  object EqualizeHistogram extends Preprocessor {
+  object EqualizeHistogram extends ImagePreprocessor {
     override def preprocess(mat: Mat): List[Mat] = {
       equalizeHist(mat, mat)
       List(mat)
     }
   }
 
-  object Grayscale extends Preprocessor {
+  object Grayscale extends ImagePreprocessor {
     override def preprocess(mat: Mat): List[Mat] = {
       cvtColor(mat, mat, COLOR_BGRA2GRAY)
       List(mat)
     }
   }
 
-  class Brightness(delta: Double) extends Preprocessor {
+  class Brightness(delta: Double) extends ImagePreprocessor {
     override def preprocess(mat: Mat): List[Mat] = {
       mat.convertTo(mat, -1, 1, delta)
       List(mat)
     }
   }
 
-  class Blur(ksize: Int) extends Preprocessor {
+  class Blur(ksize: Int) extends ImagePreprocessor {
     override def preprocess(mat: Mat): List[Mat] = {
       medianBlur(mat, mat, ksize)
       List(mat)
     }
   }
 
-  class Rotate(degrees: Double) extends Preprocessor {
+  class Rotate(degrees: Double) extends ImagePreprocessor {
     override def preprocess(mat: Mat): List[Mat] = {
       val rm = getRotationMatrix2D(new Point2f(mat.cols() / 2, mat.rows() / 2), degrees - 180, 1)
       warpAffine(mat, mat, rm, mat.size())

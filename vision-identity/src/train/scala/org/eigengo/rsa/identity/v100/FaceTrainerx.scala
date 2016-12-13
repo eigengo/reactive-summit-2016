@@ -41,7 +41,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 
 import scala.util.Try
 
-object FaceTrainer {
+object FaceTrainerx {
   val height = 50
   val width = 50
   val channels = 3
