@@ -1,5 +1,6 @@
 import sbt._
 
+//noinspection TypeAnnotation
 object Dependencies {
 
   val scalaTest  = "org.scalatest"  %% "scalatest"  % "2.2.6"
@@ -13,7 +14,7 @@ object Dependencies {
   val troy = "io.github.cassandra-scala" %% "troy" % "0.0.2"
 
   object cakesolutions {
-    val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.10.0.1-SNAPSHOT"
+    val akkaKafkaClient =  "net.cakesolutions" %% "scala-kafka-client-akka" % "0.10.1.1"
   }
 
   object scalapb {
@@ -45,7 +46,7 @@ object Dependencies {
 
   object nd4j {
 
-    private val version = "0.5.0"
+    private val version = "0.7.1"
     private lazy val osArchClassifier = {
       val rawOsName = System.getProperty("os.name").toLowerCase
       val rawArch = System.getProperty("os.arch").toLowerCase
@@ -72,7 +73,7 @@ object Dependencies {
   }
 
   object deeplearning4j {
-    private val version = "0.5.0"
+    private val version = "0.7.1"
 
     val core = "org.deeplearning4j" % "deeplearning4j-core" % version
   }
