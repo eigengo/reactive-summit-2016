@@ -68,6 +68,8 @@ trait ImageTrainerApp {
   def sourceDirectory: File
   def targetDirectory: File
 
+  def seed: Long = rng.nextLong()
+
   def networkConfiguration: MultiLayerConfiguration
 
   private val nCores = 8

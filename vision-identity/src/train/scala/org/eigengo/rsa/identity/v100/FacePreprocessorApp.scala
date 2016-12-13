@@ -18,27 +18,31 @@
  */
 package org.eigengo.rsa.identity.v100
 
-import org.bytedeco.javacpp.opencv_core._
+import java.io.File
+
+import org.bytedeco.javacpp.opencv_core.{Mat, RectVector}
+import org.bytedeco.javacpp.opencv_imgproc.{COLOR_BGRA2GRAY, cvtColor, equalizeHist}
 import org.bytedeco.javacpp.opencv_objdetect.CascadeClassifier
+import org.eigengo.rsa.deeplearning4j.train.{ImagePreprocessingPipelineApp, ImagePreprocessor}
 
-trait Preprocessor {
+import scala.util.Random
 
-  def preprocess(mat: Mat): List[Mat]
+object FacePreprocessorApp extends ImagePreprocessingPipelineApp {
+  val brightnessPreprocessors = (-10 to 10).map(new ImagePreprocessor.Brightness(_))
+  val blurPreprocessors = (1 to 4).filterNot(_ % 2 == 0).map(x ⇒ new ImagePreprocessor.Blur(x * 3))
+  val rotatePreprocessors = List.fill(10)(new ImagePreprocessor.Rotate((Random.nextDouble() - 0.5) * 30))
 
-}
+  override val preprocessors: List[ImagePreprocessor] =
+    List(new ExtractFaces("/haarcascade_frontalface_default.xml")) ++
+      rotatePreprocessors ++
+      brightnessPreprocessors ++
+      blurPreprocessors
 
-object Preprocessors {
-  import org.bytedeco.javacpp.opencv_imgproc._
+  override def sourceDirectory: File = new File("/Users/janmachacek/Eigengo/reactive-summit-2016-data/faces-raw")
+  override def targetDirectory: File = new File("/Users/janmachacek/Eigengo/reactive-summit-2016-data/faces")
 
-  object EqualizeHistogram extends Preprocessor {
-    override def preprocess(mat: Mat): List[Mat] = {
-      equalizeHist(mat, mat)
-      List(mat)
-    }
-  }
-
-  class ExtractFaces(cascadeResource: String) extends Preprocessor {
-    val cascadeClassifier = {
+  class ExtractFaces(cascadeResource: String) extends ImagePreprocessor {
+    private val cascadeClassifier = {
       val file = FaceExtractor.getClass.getResource(cascadeResource).getFile
       new CascadeClassifier(file)
     }
@@ -55,35 +59,6 @@ object Preprocessors {
         val submat = new Mat(mat, rect)
         submat
       }.toList
-    }
-  }
-
-  object Grayscale extends Preprocessor {
-    override def preprocess(mat: Mat): List[Mat] = {
-      cvtColor(mat, mat, COLOR_BGRA2GRAY)
-      List(mat)
-    }
-  }
-
-  class Brightness(delta: Double) extends Preprocessor {
-    override def preprocess(mat: Mat): List[Mat] = {
-      mat.convertTo(mat, -1, 1, delta)
-      List(mat)
-    }
-  }
-
-  class Blur(ksize: Int) extends Preprocessor {
-    override def preprocess(mat: Mat): List[Mat] = {
-      medianBlur(mat, mat, ksize)
-      List(mat)
-    }
-  }
-
-  class Rotate(degrees: Double) extends Preprocessor {
-    override def preprocess(mat: Mat): List[Mat] = {
-      val rm = getRotationMatrix2D(new Point2f(mat.cols() / 2, mat.rows() / 2), degrees - 180, 1)
-      warpAffine(mat, mat, rm, mat.size())
-      List(mat)
     }
   }
 
